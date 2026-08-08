@@ -6,16 +6,10 @@ import TransportControls from '@/components/TransportControls.vue'
 import { audioEngine } from '@/audio/AudioEngine.ts'
 
 const { state, selectTrack, toggleStep, clearSelectedTrack } = useGroovebox()
-
-async function testKick() {
-  await audioEngine.loadSamples([{ id: '1', url: '/samples/kick.wav' }])
-  audioEngine.playSample('1')
-}
 </script>
 
 <template>
   <div class="groovebox">
-    <button @click="testKick()">Boom!</button>
     <header>
       <h1>Groovue</h1>
       <span>Vue Groovebox</span>
