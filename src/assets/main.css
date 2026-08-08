@@ -31,6 +31,10 @@ body {
 button {
   color: inherit;
   font: inherit;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  cursor: pointer;
 }
 
 header {

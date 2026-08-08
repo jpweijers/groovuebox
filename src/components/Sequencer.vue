@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { Track } from '@/domain/track.interface.ts'
 
-const { track } = defineProps<{ track: Track }>()
+const { track } = defineProps<{ track: Track; currentStep: number }>()
 
 defineEmits(['toggle', 'clear'])
 </script>
@@ -12,13 +12,14 @@ defineEmits(['toggle', 'clear'])
       <h2 id="sequencer-heading">Sequencer</h2>
       <span> {{ track.name }} </span>
     </header>
+    {{ currentStep }}
     <div class="steps">
       <button
         v-for="(active, index) in track.steps"
         :key="index"
         type="button"
         class="step"
-        :class="{ active }"
+        :class="{ active, current: index === currentStep }"
         :aria-label="`Step ${index + 1}`"
         :aria-pressed="active"
         @click="$emit('toggle', index)"
@@ -36,10 +37,6 @@ defineEmits(['toggle', 'clear'])
 .clear {
   padding: 8px 12px;
   color: var(--text-muted);
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  cursor: pointer;
 }
 
 .clear:hover {
@@ -84,8 +81,12 @@ defineEmits(['toggle', 'clear'])
 
 .step.active {
   color: var(--text);
-  background: #3a2720;
+  background: #3a2720 !important;
   border-color: var(--orange);
+}
+
+.step.current {
+  background: var(--amber);
 }
 
 .step.active span {

@@ -48,11 +48,7 @@ defineEmits<{ selected: [index: number] }>()
   align-items: center;
   gap: 8px;
   padding: 0 12px;
-  color: inherit;
   background: var(--panel-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-small);
-  cursor: pointer;
 }
 
 .track:hover {

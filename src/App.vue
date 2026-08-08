@@ -2,16 +2,26 @@
 import Sequencer from '@/components/Sequencer.vue'
 import { useGroovebox } from '@/composables/useGroovebox.ts'
 import TrackSelector from '@/components/TrackSelector.vue'
+import TransportControls from '@/components/TransportControls.vue'
+import { audioEngine } from '@/audio/AudioEngine.ts'
 
 const { state, selectTrack, toggleStep, clearSelectedTrack } = useGroovebox()
+
+async function testKick() {
+  await audioEngine.loadSamples([{ id: '1', url: '/samples/kick.wav' }])
+  audioEngine.playSample('1')
+}
 </script>
 
 <template>
   <div class="groovebox">
+    <button @click="testKick()">Boom!</button>
     <header>
       <h1>Groovue</h1>
       <span>Vue Groovebox</span>
     </header>
+
+    <TransportControls />
 
     <TrackSelector
       :tracks="state.tracks"
@@ -21,6 +31,7 @@ const { state, selectTrack, toggleStep, clearSelectedTrack } = useGroovebox()
 
     <Sequencer
       :track="state.tracks[state.selectedTrack]!"
+      :current-step="state.currentStep"
       @toggle="(index: number) => toggleStep(index)"
       @clear="clearSelectedTrack()"
     />
