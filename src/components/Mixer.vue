@@ -1,13 +1,14 @@
 <script lang="ts" setup>
 import type { Track } from '@/domain/track.interface.ts'
 import MixerChannel from '@/components/MixerChannel.vue'
-import type {ChokeGroup} from "@/domain/choke-groups.enum.ts";
+import type { ChokeGroup } from '@/domain/choke-groups.enum.ts'
 
 const { tracks, selected } = defineProps<{ tracks: Track[]; selected: number }>()
 
 defineEmits<{
   select: [index: number]
   changeVolume: [id: string, volume: number]
+  changePan: [id: string, pan: number]
   changeChokeGroup: [id: string, group: ChokeGroup]
 }>()
 </script>
@@ -26,6 +27,7 @@ defineEmits<{
         :key="track.id"
         @select="$emit('select', index)"
         @changeVolume="(volume) => $emit('changeVolume', track.id, volume)"
+        @changePan="(pan) => $emit('changePan', track.id, pan)"
         @changeCokeGroup="(group) => $emit('changeChokeGroup', track.id, group)"
       />
     </div>

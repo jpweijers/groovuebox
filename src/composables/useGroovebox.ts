@@ -47,6 +47,7 @@ export function useGroovebox() {
     for (const track of state.value.tracks) {
       if (track.sampleUrl) {
         audioEngine.setTrackVolume(track.id, track.volume)
+        audioEngine.setTrackPan(track.id, track.pan)
       }
     }
 
@@ -102,6 +103,14 @@ export function useGroovebox() {
     }
   }
 
+  function setTrackPan(id: string, pan: number): void {
+    const track = findTrack(id)
+    if (track) {
+      track.pan = pan
+      audioEngine.setTrackPan(track.id, track.pan)
+    }
+  }
+
   return {
     state,
     selectTrack,
@@ -114,5 +123,6 @@ export function useGroovebox() {
     setCurrentTrackVolume,
     setTrackVolume,
     setTrackChokeGroup,
+    setTrackPan,
   }
 }

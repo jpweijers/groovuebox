@@ -7,12 +7,18 @@ const { track, selected } = defineProps<{ track: Track; selected: boolean }>()
 const emit = defineEmits<{
   select: []
   changeVolume: [number]
+  changePan: [number]
   changeCokeGroup: [ChokeGroup]
 }>()
 
 function changeVolume(event: InputEvent): void {
   const input = event.target as HTMLInputElement
   emit('changeVolume', Number(input.value))
+}
+
+function changePan(event: InputEvent): void {
+  const input = event.target as HTMLInputElement
+  emit('changePan', Number(input.value))
 }
 
 function changeChokeGroup(event: Event): void {
@@ -38,8 +44,22 @@ function changeChokeGroup(event: Event): void {
       min="0"
       max="1"
       step="0.01"
+      class="volume"
       :value="track.volume"
       @input="changeVolume"
+    />
+
+    <label :for="`pan-${track.id}`">L/R</label>
+    <output :for="`pan-${track.id}`">{{ Math.round(track.pan * 100) }}%</output>
+    <input
+      :id="`pan-${track.id}`"
+      type="range"
+      min="-1"
+      max="1"
+      step="0.01"
+      :value="track.pan"
+      class="pan"
+      @input="changePan"
     />
 
     <label :for="`choke-${track.id}`">Choke</label>
@@ -97,11 +117,16 @@ output {
   font-variant-numeric: tabular-nums;
 }
 
-input {
+input.volume {
   width: 100%;
   accent-color: var(--amber);
   writing-mode: vertical-lr;
   direction: rtl;
+}
+
+input.pan {
+  width: 100%;
+  accent-color: var(--amber);
 }
 
 select {

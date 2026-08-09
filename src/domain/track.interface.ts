@@ -5,6 +5,7 @@ export interface Track {
   name: string
   sampleUrl: string
   volume: number
+  pan: number
   steps: boolean[]
   chokeGroup: ChokeGroup | null
 }

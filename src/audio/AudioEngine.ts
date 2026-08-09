@@ -12,6 +12,7 @@ class AudioEngine {
   private readonly buffers = new Map<string, AudioBuffer>()
   private readonly trackGains = new Map<string, GainNode>()
   private readonly chokeSources = new Map<string, AudioBufferSourceNode>()
+  private readonly trackPanners = new Map<string, StereoPannerNode>()
 
   private getContext(): AudioContext {
     if (!this.context) {
@@ -47,7 +48,7 @@ class AudioEngine {
         const buffer = await context.decodeAudioData(data)
 
         this.buffers.set(id, buffer)
-        this.createTrackGain(id)
+        this.createTrack(id)
       }),
     )
   }
@@ -92,13 +93,28 @@ class AudioEngine {
     const gain = this.trackGains.get(id)
 
     if (!gain) {
-      throw new Error(`Could not load track "${id}".`)
+      throw new Error(`Could not load gain for track "${id}".`)
     }
 
     const safeVolume = Math.min(1, Math.max(0, volume))
 
     gain.gain.cancelScheduledValues(context.currentTime)
     gain.gain.setTargetAtTime(safeVolume, context.currentTime, 0.01)
+  }
+
+  setTrackPan(id: string, pan: number): void {
+    const context = this.getContext()
+    const panner = this.trackPanners.get(id)
+
+    if (!panner) {
+      throw new Error(`Could not load pan for track "${id}".`)
+    }
+
+    const safePan = Math.min(1, Math.max(-1, pan))
+
+    console.log(`Panning at ${safePan}`)
+    panner.pan.cancelScheduledValues(context.currentTime)
+    panner.pan.setTargetAtTime(safePan, context.currentTime, 0.01)
   }
 
   async close(): Promise<void> {
@@ -110,22 +126,29 @@ class AudioEngine {
     this.masterGain = null
     this.buffers.clear()
     this.trackGains.clear()
+    this.trackPanners.clear()
   }
 
   get currentTime(): number {
     return this.getContext().currentTime
   }
 
-  private createTrackGain(id: string): void {
-    const existing = this.trackGains.get(id)
+  private createTrack(id: string): void {
+    const existingGain = this.trackGains.get(id)
+    const existingPan = this.trackPanners.get(id)
 
-    if (existing) return
+    if (existingPan && existingGain) return
 
     const context = this.getContext()
-    const gain = context.createGain()
 
-    gain.connect(this.masterGain!)
+    const gain = context.createGain()
+    const panner = context.createStereoPanner()
+
+    gain.connect(panner)
+    panner.connect(this.masterGain!)
+
     this.trackGains.set(id, gain)
+    this.trackPanners.set(id, panner)
   }
 }
 
