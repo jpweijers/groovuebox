@@ -3,7 +3,15 @@ import type { Track } from '@/domain/track.interface.ts'
 import { ChokeGroup } from '@/domain/choke-groups.enum.ts'
 
 const { track } = defineProps<{ track: Track }>()
-defineEmits<{ changeChokeGroup: [group: ChokeGroup] }>()
+const emit = defineEmits<{
+  changeChokeGroup: [group: ChokeGroup]
+  changeVolume: [volume: number]
+}>()
+
+function changeVolume(event: InputEvent) {
+  const input = event.target as HTMLInputElement
+  emit('changeVolume', Number(input.value))
+}
 </script>
 
 <template>
@@ -12,6 +20,22 @@ defineEmits<{ changeChokeGroup: [group: ChokeGroup] }>()
       <h2>{{ track.name }}</h2>
       <span>Track Controls</span>
     </header>
+
+    <div class="volume">
+      <label for="track-volume">Volume</label>
+      <input
+        id="track-volume"
+        type="range"
+        min="0"
+        max="1"
+        step="0.01"
+        :value="track.volume"
+        @input="changeVolume"
+      />
+
+      <output for="track-volume"> {{ Math.round(track.volume * 100) }}% </output>
+    </div>
+
     <fieldset>
       <legend>Choke group</legend>
       <div class="groups">
@@ -73,5 +97,30 @@ button {
   color: #17130d;
   background: var(--amber);
   border-color: var(--amber);
+}
+
+.volume {
+  display: grid;
+  grid-template-columns: 80px 1fr 48px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.volume label {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.volume input {
+  width: 100%;
+  accent-color: var(--amber);
+}
+
+.volume output {
+  color: var(--text);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 </style>

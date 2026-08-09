@@ -5,7 +5,8 @@ import TrackSelector from '@/components/TrackSelector.vue'
 import TransportControls from '@/components/TransportControls.vue'
 import TrackControls from '@/components/TrackControls.vue'
 
-const { state, selectTrack, toggleStep, clearSelectedTrack, changeChokeGroup } = useGroovebox()
+const { state, selectTrack, toggleStep, clearSelectedTrack, changeChokeGroup, setTrackVolume } =
+  useGroovebox()
 </script>
 
 <template>
@@ -26,6 +27,7 @@ const { state, selectTrack, toggleStep, clearSelectedTrack, changeChokeGroup } =
     <TrackControls
       :track="state.tracks[state.selectedTrack]!"
       @change-choke-group="(group) => changeChokeGroup(group)"
+      @change-volume="(volume) => setTrackVolume(volume)"
     />
 
     <Sequencer

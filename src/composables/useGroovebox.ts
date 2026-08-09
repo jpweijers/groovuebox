@@ -74,6 +74,14 @@ export function useGroovebox() {
     }
   }
 
+  function setTrackVolume(volume: number): void {
+    const track = state.value.tracks[state.value.selectedTrack]
+    if (track) {
+      track.volume = volume
+      audioEngine.setTrackVolume(track.id, volume)
+    }
+  }
+
   return {
     state,
     selectTrack,
@@ -83,5 +91,6 @@ export function useGroovebox() {
     play,
     stop,
     changeChokeGroup,
+    setTrackVolume,
   }
 }
