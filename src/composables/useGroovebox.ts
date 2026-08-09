@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import type { GrooveBoxState } from '@/domain/groovebox-state.interface.ts'
 import { SequencerScheduler } from '@/audio/SequenceScheduler.ts'
 import { audioEngine } from '@/audio/AudioEngine.ts'
+import type { ChokeGroup } from '@/domain/choke-groups.enum.ts'
 
 const state = ref<GrooveBoxState>(createGroovebox())
 const scheduler = new SequencerScheduler({
@@ -66,6 +67,13 @@ export function useGroovebox() {
     state.value.isPlaying = false
   }
 
+  function changeChokeGroup(chokeGroup: ChokeGroup): void {
+    const track = state.value.tracks[state.value.selectedTrack]
+    if (track) {
+      track.chokeGroup = chokeGroup
+    }
+  }
+
   return {
     state,
     selectTrack,
@@ -74,5 +82,6 @@ export function useGroovebox() {
     loadSamples,
     play,
     stop,
+    changeChokeGroup,
   }
 }

@@ -1,3 +1,5 @@
+import type { ChokeGroup } from '@/domain/choke-groups.enum.ts'
+
 interface SampleDefinition {
   id: string
   url: string
@@ -50,7 +52,7 @@ class AudioEngine {
     )
   }
 
-  playSample(id: string, time?: number, chokeGroup?: string): void {
+  playSample(id: string, time: number, chokeGroup: ChokeGroup): void {
     const context = this.getContext()
     const buffer = this.buffers.get(id)
     const gain = this.trackGains.get(id)
@@ -62,7 +64,7 @@ class AudioEngine {
     const startTime = time ?? context.currentTime
 
     if (chokeGroup) {
-      const previousSource = this.chokeSources.get(chokeGroup)
+      const previousSource = this.chokeSources.get(chokeGroup.toString())
       if (previousSource) {
         previousSource.stop(startTime)
       }
@@ -74,10 +76,10 @@ class AudioEngine {
     source.connect(gain)
 
     if (chokeGroup) {
-      this.chokeSources.set(chokeGroup, source)
+      this.chokeSources.set(chokeGroup.toString(), source)
       source.addEventListener('ended', () => {
-        if (this.chokeSources.get(chokeGroup) === source) {
-          this.chokeSources.delete(chokeGroup)
+        if (this.chokeSources.get(chokeGroup.toString()) === source) {
+          this.chokeSources.delete(chokeGroup.toString())
         }
       })
     }

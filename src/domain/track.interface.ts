@@ -1,8 +1,10 @@
+import type { ChokeGroup } from '@/domain/choke-groups.enum.ts'
+
 export interface Track {
   id: string
   name: string
   sampleUrl: string
   volume: number
   steps: boolean[]
-  chokeGroup?: string
+  chokeGroup: ChokeGroup | null
 }
