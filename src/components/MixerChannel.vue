@@ -100,6 +100,8 @@ output {
 input {
   width: 100%;
   accent-color: var(--amber);
+  writing-mode: vertical-lr;
+  direction: rtl;
 }
 
 select {
