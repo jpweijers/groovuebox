@@ -26,6 +26,14 @@ function changeChokeGroup(event: Event): void {
   const group = input.value === '' ? null : (Number(input.value) as ChokeGroup)
   emit('changeCokeGroup', group)
 }
+
+function formatPan() {
+  if (track.pan === 0) return 'C'
+
+  const amount = Math.round(Math.abs(track.pan) * 50)
+
+  return track.pan < 0 ? `L${amount}` : `R${amount}`
+}
 </script>
 
 <template>
@@ -34,33 +42,36 @@ function changeChokeGroup(event: Event): void {
       {{ track.name }}
     </button>
 
-    <label :for="`volume-${track.id}`">Volume</label>
+    <div class="volume">
+      <label :for="`volume-${track.id}`">Volume</label>
 
-    <output :for="`volume-${track.id}`"> {{ Math.round(track.volume * 100) }}% </output>
+      <output :for="`volume-${track.id}`"> {{ Math.round(track.volume * 100) }}% </output>
 
-    <input
-      :id="`volume-${track.id}`"
-      type="range"
-      min="0"
-      max="1"
-      step="0.01"
-      class="volume"
-      :value="track.volume"
-      @input="changeVolume"
-    />
+      <input
+        :id="`volume-${track.id}`"
+        type="range"
+        min="0"
+        max="1"
+        step="0.01"
+        :value="track.volume"
+        @input="changeVolume"
+      />
+    </div>
 
-    <label :for="`pan-${track.id}`">L/R</label>
-    <output :for="`pan-${track.id}`">{{ Math.round(track.pan * 100) }}%</output>
-    <input
-      :id="`pan-${track.id}`"
-      type="range"
-      min="-1"
-      max="1"
-      step="0.01"
-      :value="track.pan"
-      class="pan"
-      @input="changePan"
-    />
+    <hr />
+
+    <div class="pan">
+      <output :for="`pan-${track.id}`">{{ formatPan() }}</output>
+      <input
+        :id="`pan-${track.id}`"
+        type="range"
+        min="-1"
+        max="1"
+        step="0.01"
+        :value="track.pan"
+        @input="changePan"
+      />
+    </div>
 
     <label :for="`choke-${track.id}`">Choke</label>
 
@@ -117,16 +128,32 @@ output {
   font-variant-numeric: tabular-nums;
 }
 
-input.volume {
+.volume {
+  display: grid;
+  justify-items: center;
+  grid-gap: 0.5rem;
+}
+
+.volume input {
   width: 100%;
   accent-color: var(--amber);
   writing-mode: vertical-lr;
   direction: rtl;
 }
 
-input.pan {
+.pan {
+  display: grid;
+  justify-items: center;
+}
+
+.pan input {
   width: 100%;
   accent-color: var(--amber);
+}
+
+.pan output {
+  font-size: 0.7rem;
+  padding-bottom: 0.5rem;
 }
 
 select {
