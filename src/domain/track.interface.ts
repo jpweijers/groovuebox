@@ -4,4 +4,5 @@ export interface Track {
   sampleUrl: string
   volume: number
   steps: boolean[]
+  chokeGroup?: string
 }

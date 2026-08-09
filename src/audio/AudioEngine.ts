@@ -9,6 +9,7 @@ class AudioEngine {
 
   private readonly buffers = new Map<string, AudioBuffer>()
   private readonly trackGains = new Map<string, GainNode>()
+  private readonly chokeSources = new Map<string, AudioBufferSourceNode>()
 
   private getContext(): AudioContext {
     if (!this.context) {
@@ -49,7 +50,7 @@ class AudioEngine {
     )
   }
 
-  playSample(id: string, time?: number): void {
+  playSample(id: string, time?: number, chokeGroup?: string): void {
     const context = this.getContext()
     const buffer = this.buffers.get(id)
     const gain = this.trackGains.get(id)
@@ -58,11 +59,30 @@ class AudioEngine {
       throw new Error(`Could not load sample "${id}"`)
     }
 
+    const startTime = time ?? context.currentTime
+
+    if (chokeGroup) {
+      const previousSource = this.chokeSources.get(chokeGroup)
+      if (previousSource) {
+        previousSource.stop(startTime)
+      }
+    }
+
     const source = context.createBufferSource()
 
     source.buffer = buffer
     source.connect(gain)
-    source.start(time ?? context.currentTime)
+
+    if (chokeGroup) {
+      this.chokeSources.set(chokeGroup, source)
+      source.addEventListener('ended', () => {
+        if (this.chokeSources.get(chokeGroup) === source) {
+          this.chokeSources.delete(chokeGroup)
+        }
+      })
+    }
+
+    source.start(startTime)
   }
 
   setTrackVolume(id: string, volume: number): void {
