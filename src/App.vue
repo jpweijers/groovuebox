@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import Sequencer from '@/components/Sequencer.vue'
 import { useGroovebox } from '@/composables/useGroovebox.ts'
-import TrackSelector from '@/components/TrackSelector.vue'
 import TransportControls from '@/components/TransportControls.vue'
-import TrackControls from '@/components/TrackControls.vue'
+import Mixer from '@/components/Mixer.vue'
 
-const { state, selectTrack, toggleStep, clearSelectedTrack, changeChokeGroup, setTrackVolume } =
+const { state, selectTrack, toggleStep, clearSelectedTrack, setTrackVolume, setTrackChokeGroup } =
   useGroovebox()
 </script>
 
@@ -18,16 +17,12 @@ const { state, selectTrack, toggleStep, clearSelectedTrack, changeChokeGroup, se
 
     <TransportControls />
 
-    <TrackSelector
+    <Mixer
       :tracks="state.tracks"
       :selected="state.selectedTrack"
-      @selected="(index: number) => selectTrack(index)"
-    />
-
-    <TrackControls
-      :track="state.tracks[state.selectedTrack]!"
-      @change-choke-group="(group) => changeChokeGroup(group)"
-      @change-volume="(volume) => setTrackVolume(volume)"
+      @select="(index) => selectTrack(index)"
+      @changeVolume="(id, volume) => setTrackVolume(id, volume)"
+      @changeChokeGroup="(id, group) => setTrackChokeGroup(id, group)"
     />
 
     <Sequencer

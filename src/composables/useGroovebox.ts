@@ -4,6 +4,7 @@ import type { GrooveBoxState } from '@/domain/groovebox-state.interface.ts'
 import { SequencerScheduler } from '@/audio/SequenceScheduler.ts'
 import { audioEngine } from '@/audio/AudioEngine.ts'
 import type { ChokeGroup } from '@/domain/choke-groups.enum.ts'
+import type { Track } from '@/domain/track.interface.ts'
 
 const state = ref<GrooveBoxState>(createGroovebox())
 const scheduler = new SequencerScheduler({
@@ -74,11 +75,30 @@ export function useGroovebox() {
     }
   }
 
-  function setTrackVolume(volume: number): void {
+  function setCurrentTrackVolume(volume: number): void {
     const track = state.value.tracks[state.value.selectedTrack]
     if (track) {
       track.volume = volume
       audioEngine.setTrackVolume(track.id, volume)
+    }
+  }
+
+  function findTrack(id: string): Track | undefined {
+    return state.value.tracks.find((track) => track.id === id)
+  }
+
+  function setTrackVolume(id: string, volume: number): void {
+    const track = findTrack(id)
+    if (track) {
+      track.volume = volume
+      audioEngine.setTrackVolume(track.id, volume)
+    }
+  }
+
+  function setTrackChokeGroup(id: string, chokeGroup: ChokeGroup): void {
+    const track = findTrack(id)
+    if (track) {
+      track.chokeGroup = chokeGroup
     }
   }
 
@@ -91,6 +111,8 @@ export function useGroovebox() {
     play,
     stop,
     changeChokeGroup,
+    setCurrentTrackVolume,
     setTrackVolume,
+    setTrackChokeGroup,
   }
 }
