@@ -1,4 +1,4 @@
-import type { GrooveBoxState } from '@/domain/groovebox-state.interface.ts'
+import type { PersistedState } from '@/domain/groovebox-state.interface.ts'
 import type { Track } from '@/domain/track.interface.ts'
 import type { ChokeGroup } from '@/domain/choke-groups.enum.ts'
 
@@ -19,10 +19,8 @@ const tracks: CreateTrackInput[] = [
   { name: 'Track 8' },
 ]
 
-export function createGroovebox(): GrooveBoxState {
+export function createGroovebox(): PersistedState {
   return {
-    isPlaying: false,
-    currentStep: 0,
     selectedTrack: 0,
     tempo: 90,
     tracks: tracks.map(createTrack),

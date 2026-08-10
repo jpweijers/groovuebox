@@ -1,9 +1,14 @@
 import type { Track } from '@/domain/track.interface.ts'
 
-export interface GrooveBoxState {
+export interface PersistedState {
   tempo: number
-  isPlaying: boolean
-  currentStep: number
   selectedTrack: number
   tracks: Track[]
 }
+
+export interface RuntimeState {
+  isPlaying: boolean
+  currentStep: number
+}
+
+export type GrooveBoxState = PersistedState & RuntimeState

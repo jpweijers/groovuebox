@@ -1,35 +1,44 @@
 import { createGroovebox } from '@/domain/create.ts'
-import { ref } from 'vue'
-import type { GrooveBoxState } from '@/domain/groovebox-state.interface.ts'
+import type {
+  GrooveBoxState,
+  PersistedState,
+  RuntimeState,
+} from '@/domain/groovebox-state.interface.ts'
 import { SequencerScheduler } from '@/audio/SequenceScheduler.ts'
 import { audioEngine } from '@/audio/AudioEngine.ts'
 import type { ChokeGroup } from '@/domain/choke-groups.enum.ts'
 import type { Track } from '@/domain/track.interface.ts'
+import { useStorage } from '@vueuse/core'
+import { computed, ref } from 'vue'
 
-const state = ref<GrooveBoxState>(createGroovebox())
+const persistedState = useStorage<PersistedState>('groovebox', createGroovebox())
+const runtimeState = ref<RuntimeState>({ isPlaying: false, currentStep: 0 })
+
+const state = computed<GrooveBoxState>(() => ({ ...persistedState.value, ...runtimeState.value }))
+
 const scheduler = new SequencerScheduler({
-  getTempo: () => state.value.tempo,
-  getTracks: () => state.value.tracks,
+  getTempo: () => persistedState.value.tempo,
+  getTracks: () => persistedState.value.tracks,
   onStep: (step: number) => {
-    state.value.currentStep = step
+    runtimeState.value.currentStep = step
   },
 })
 let samplesLoaded = false
 
 export function useGroovebox() {
   function selectTrack(index: number) {
-    state.value.selectedTrack = index
+    persistedState.value.selectedTrack = index
   }
 
   function toggleStep(id: string, index: number) {
-    const track = state.value.tracks.find((track) => track.id === id)
+    const track = findTrack(id)
     if (track) {
       track.steps[index] = !track.steps[index]
     }
   }
 
   function clearTrackSequence(id: string) {
-    const track = state.value.tracks.find((track) => track.id === id)
+    const track = findTrack(id)
     if (track) {
       track.steps.fill(false)
     }
@@ -38,13 +47,13 @@ export function useGroovebox() {
   async function loadSamples(): Promise<void> {
     if (samplesLoaded) return
 
-    const definitions = state.value.tracks
+    const definitions = persistedState.value.tracks
       .filter((track) => track.sampleUrl)
       .map((track) => ({ id: track.id, url: track.sampleUrl }))
 
     await audioEngine.loadSamples(definitions)
 
-    for (const track of state.value.tracks) {
+    for (const track of persistedState.value.tracks) {
       if (track.sampleUrl) {
         audioEngine.setTrackVolume(track.id, track.volume)
         audioEngine.setTrackPan(track.id, track.pan)
@@ -55,29 +64,22 @@ export function useGroovebox() {
   }
 
   async function play(): Promise<void> {
-    if (state.value.isPlaying) return
+    if (runtimeState.value.isPlaying) return
 
     await audioEngine.resume()
     await loadSamples()
 
-    state.value.isPlaying = true
+    runtimeState.value.isPlaying = true
     scheduler.start()
   }
 
   async function stop(): Promise<void> {
     scheduler.stop()
-    state.value.isPlaying = false
-  }
-
-  function changeChokeGroup(chokeGroup: ChokeGroup): void {
-    const track = state.value.tracks[state.value.selectedTrack]
-    if (track) {
-      track.chokeGroup = chokeGroup
-    }
+    runtimeState.value.isPlaying = false
   }
 
   function findTrack(id: string): Track | undefined {
-    return state.value.tracks.find((track) => track.id === id)
+    return persistedState.value.tracks.find((track) => track.id === id)
   }
 
   function setTrackVolume(id: string, volume: number): void {
@@ -111,7 +113,6 @@ export function useGroovebox() {
     loadSamples,
     play,
     stop,
-    changeChokeGroup,
     setTrackVolume,
     setTrackChokeGroup,
     setTrackPan,
