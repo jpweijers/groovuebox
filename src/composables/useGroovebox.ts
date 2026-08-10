@@ -105,6 +105,10 @@ export function useGroovebox() {
     }
   }
 
+  function setBpm(bpm: number): void {
+    persistedState.value.tempo = Math.min(240, Math.max(40, Math.round(bpm)))
+  }
+
   return {
     state,
     selectTrack,
@@ -116,5 +120,6 @@ export function useGroovebox() {
     setTrackVolume,
     setTrackChokeGroup,
     setTrackPan,
+    setBpm,
   }
 }

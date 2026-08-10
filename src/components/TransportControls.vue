@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import { useGroovebox } from '@/composables/useGroovebox.ts'
+import TempoControl from '@/components/TempoControl.vue'
 
-const { state, play, stop } = useGroovebox()
+const { play, stop } = useGroovebox()
 </script>
 
 <template>
@@ -9,7 +10,8 @@ const { state, play, stop } = useGroovebox()
     <div class="controls">
       <button class="start" @click="play">Play</button>
       <button class="stop" @click="stop">Stop</button>
-      <span class="bpm">BPM: {{ state.tempo }}</span>
+
+      <TempoControl />
     </div>
   </section>
 </template>
@@ -28,9 +30,5 @@ const { state, play, stop } = useGroovebox()
 .stop {
   padding: 10px 20px;
   color: var(--text-muted);
-}
-
-.bpm {
-  padding: 4px 10px;
 }
 </style>
