@@ -76,14 +76,6 @@ export function useGroovebox() {
     }
   }
 
-  function setCurrentTrackVolume(volume: number): void {
-    const track = state.value.tracks[state.value.selectedTrack]
-    if (track) {
-      track.volume = volume
-      audioEngine.setTrackVolume(track.id, volume)
-    }
-  }
-
   function findTrack(id: string): Track | undefined {
     return state.value.tracks.find((track) => track.id === id)
   }
