@@ -93,7 +93,8 @@ class AudioEngine {
     const gain = this.trackGains.get(id)
 
     if (!gain) {
-      throw new Error(`Could not load gain for track "${id}".`)
+      console.warn(`Could not load gain for track "${id}".`)
+      return
     }
 
     const safeVolume = Math.min(1, Math.max(0, volume))
@@ -107,12 +108,12 @@ class AudioEngine {
     const panner = this.trackPanners.get(id)
 
     if (!panner) {
-      throw new Error(`Could not load pan for track "${id}".`)
+      console.warn(`Could not load pan for track "${id}".`)
+      return
     }
 
     const safePan = Math.min(1, Math.max(-1, pan))
 
-    console.log(`Panning at ${safePan}`)
     panner.pan.cancelScheduledValues(context.currentTime)
     panner.pan.setTargetAtTime(safePan, context.currentTime, 0.01)
   }
