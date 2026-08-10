@@ -21,15 +21,15 @@ export function useGroovebox() {
     state.value.selectedTrack = index
   }
 
-  function toggleStep(index: number) {
-    const track = state.value.tracks[state.value.selectedTrack]
+  function toggleStep(id: string, index: number) {
+    const track = state.value.tracks.find((track) => track.id === id)
     if (track) {
       track.steps[index] = !track.steps[index]
     }
   }
 
-  function clearSelectedTrack() {
-    const track = state.value.tracks[state.value.selectedTrack]
+  function clearTrackSequence(id: string) {
+    const track = state.value.tracks.find((track) => track.id === id)
     if (track) {
       track.steps.fill(false)
     }
@@ -115,12 +115,11 @@ export function useGroovebox() {
     state,
     selectTrack,
     toggleStep,
-    clearSelectedTrack,
+    clearTrackSequence,
     loadSamples,
     play,
     stop,
     changeChokeGroup,
-    setCurrentTrackVolume,
     setTrackVolume,
     setTrackChokeGroup,
     setTrackPan,

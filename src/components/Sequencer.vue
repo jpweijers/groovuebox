@@ -4,7 +4,7 @@ import { useGroovebox } from '@/composables/useGroovebox.ts'
 
 const { track } = defineProps<{ track: Track; currentStep: number }>()
 
-const { toggleStep, clearSelectedTrack } = useGroovebox()
+const { toggleStep, clearTrackSequence } = useGroovebox()
 </script>
 
 <template>
@@ -23,13 +23,13 @@ const { toggleStep, clearSelectedTrack } = useGroovebox()
         :class="{ active, current: index === currentStep }"
         :aria-label="`Step ${index + 1}`"
         :aria-pressed="active"
-        @click="toggleStep(index)"
+        @click="toggleStep(track.id, index)"
       >
         <span aria-hidden="true"></span>
       </button>
     </div>
     <footer>
-      <button type="button" class="clear" @click="clearSelectedTrack()">Clear track</button>
+      <button type="button" class="clear" @click="clearTrackSequence(track.id)">Clear track</button>
     </footer>
   </section>
 </template>
