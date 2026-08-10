@@ -82,7 +82,7 @@ const { toggleStep, clearTrackSequence } = useGroovebox()
 
 .step.active {
   color: var(--text);
-  background: #3a2720 !important;
+  background: #3a2720;
   border-color: var(--orange);
 }
 
