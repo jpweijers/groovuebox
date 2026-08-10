@@ -13,6 +13,7 @@ class AudioEngine {
   private readonly trackGains = new Map<string, GainNode>()
   private readonly chokeSources = new Map<string, AudioBufferSourceNode>()
   private readonly trackPanners = new Map<string, StereoPannerNode>()
+  private readonly trackMuteGains = new Map<string, GainNode>()
 
   private getContext(): AudioContext {
     if (!this.context) {
@@ -118,6 +119,14 @@ class AudioEngine {
     panner.pan.setTargetAtTime(safePan, context.currentTime, 0.01)
   }
 
+  setTrackMute(id: string, mute: boolean): void {
+    const muteGain = this.trackMuteGains.get(id)
+
+    if (!muteGain) return
+
+    muteGain.gain.value = mute ? 0 : 1
+  }
+
   async close(): Promise<void> {
     if (!this.context) return
 
@@ -128,6 +137,7 @@ class AudioEngine {
     this.buffers.clear()
     this.trackGains.clear()
     this.trackPanners.clear()
+    this.trackMuteGains.clear()
   }
 
   get currentTime(): number {
@@ -144,12 +154,17 @@ class AudioEngine {
 
     const gain = context.createGain()
     const panner = context.createStereoPanner()
+    const muteGain = context.createGain()
 
     gain.connect(panner)
-    panner.connect(this.masterGain!)
+    panner.connect(muteGain)
+    muteGain.connect(this.masterGain!)
+
+    muteGain.gain.value = 1
 
     this.trackGains.set(id, gain)
     this.trackPanners.set(id, panner)
+    this.trackMuteGains.set(id, muteGain)
   }
 }
 

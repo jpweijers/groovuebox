@@ -10,6 +10,14 @@
   --amber: #e9a23b;
   --orange: #eb5e35;
 
+  --mute: #4f8fbf;
+  --mute-dark: #243e52;
+  --mute-glow: rgb(79 143 191 / 30%);
+
+  --solo: #d66a4a;
+  --solo-dark: #512b25;
+  --solo-glow: rgb(214 106 74 / 30%);
+
   --radius-small: 4px;
 
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;

@@ -36,5 +36,6 @@ function createTrack({ name, url, chokeGroup }: CreateTrackInput): Track {
     pan: 0,
     steps: Array(16).fill(false),
     chokeGroup: chokeGroup ?? null,
+    muted: false,
   }
 }

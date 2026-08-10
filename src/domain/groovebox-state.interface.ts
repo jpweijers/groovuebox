@@ -9,6 +9,7 @@ export interface PersistedState {
 export interface RuntimeState {
   isPlaying: boolean
   currentStep: number
+  soloedTrackIds: string[]
 }
 
 export type GrooveBoxState = PersistedState & RuntimeState

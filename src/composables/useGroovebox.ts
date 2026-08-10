@@ -12,7 +12,7 @@ import { useStorage } from '@vueuse/core'
 import { computed, ref } from 'vue'
 
 const persistedState = useStorage<PersistedState>('groovebox', createGroovebox())
-const runtimeState = ref<RuntimeState>({ isPlaying: false, currentStep: 0 })
+const runtimeState = ref<RuntimeState>({ isPlaying: false, currentStep: 0, soloedTrackIds: [] })
 
 const state = computed<GrooveBoxState>(() => ({ ...persistedState.value, ...runtimeState.value }))
 
@@ -109,6 +109,42 @@ export function useGroovebox() {
     persistedState.value.tempo = Math.min(240, Math.max(40, Math.round(bpm)))
   }
 
+  function toggleMute(id: string): void {
+    const track = findTrack(id)
+    if (track) {
+      track.muted = !track.muted
+    }
+    syncAudibleTracks()
+  }
+
+  function toggleSolo(id: string): void {
+    const soloedTrack = runtimeState.value.soloedTrackIds.find((track) => track === id)
+
+    runtimeState.value.soloedTrackIds = soloedTrack ? [] : [id]
+
+    syncAudibleTracks()
+  }
+
+  function isTrackSoloed(id: string): boolean {
+    const track = findTrack(id)
+    if (track) {
+      return runtimeState.value.soloedTrackIds.includes(track.id)
+    }
+    return false
+  }
+
+  function syncAudibleTracks(): void {
+    for (const track of persistedState.value.tracks) {
+      audioEngine.setTrackMute(track.id, !isTrackAudible(track))
+    }
+  }
+
+  function isTrackAudible(track: Track): boolean {
+    const soloedIds = runtimeState.value.soloedTrackIds
+
+    return soloedIds.length > 0 ? soloedIds.includes(track.id) : !track.muted
+  }
+
   return {
     state,
     selectTrack,
@@ -121,5 +157,8 @@ export function useGroovebox() {
     setTrackChokeGroup,
     setTrackPan,
     setBpm,
+    toggleMute,
+    toggleSolo,
+    isTrackSoloed,
   }
 }

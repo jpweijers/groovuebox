@@ -8,4 +8,5 @@ export interface Track {
   pan: number
   steps: boolean[]
   chokeGroup: ChokeGroup | null
+  muted: boolean
 }

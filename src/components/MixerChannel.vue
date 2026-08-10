@@ -9,7 +9,8 @@ const emit = defineEmits<{
   select: []
 }>()
 
-const { setTrackVolume, setTrackPan, setTrackChokeGroup } = useGroovebox()
+const { setTrackVolume, setTrackPan, setTrackChokeGroup, toggleMute, toggleSolo, isTrackSoloed } =
+  useGroovebox()
 
 function changeVolume(event: InputEvent): void {
   const input = event.target as HTMLInputElement
@@ -76,6 +77,25 @@ function formatPan() {
         @input="changePan"
         @dblclick.prevent="centerPan()"
       />
+    </div>
+
+    <div class="channel-switches">
+      <button
+        type="button"
+        class="mute"
+        :class="{ active: track.muted }"
+        @click="toggleMute(track.id)"
+      >
+        M
+      </button>
+      <button
+        type="button"
+        class="solo"
+        :class="{ active: isTrackSoloed(track.id) }"
+        @click="toggleSolo(track.id)"
+      >
+        S
+      </button>
     </div>
 
     <label :for="`choke-${track.id}`">Choke</label>
@@ -168,5 +188,41 @@ select {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-small);
+}
+
+.channel-switches {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.channel-switches button {
+  padding: 6px;
+  color: var(--text-muted);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+}
+
+.mute {
+  --control-accent: var(--mute);
+  --control-active-bg: var(--mute-dark);
+  --control-glow: var(--mute-glow);
+}
+
+.solo {
+  --control-accent: var(--solo);
+  --control-active-bg: var(--solo-dark);
+  --control-glow: var(--solo-glow);
+}
+
+.mute.active,
+.solo.active {
+  color: #f5f5f5;
+  background: var(--control-active-bg);
+  border-color: var(--control-accent);
+  box-shadow:
+    inset 0 0 0 1px var(--control-accent),
+    0 0 10px var(--control-glow);
 }
 </style>
