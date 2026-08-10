@@ -1,12 +1,17 @@
 import type { ChokeGroup } from '@/domain/choke-groups.enum.ts'
 
+export interface Step {
+  active: boolean
+  velocity: number
+}
+
 export interface Track {
   id: string
   name: string
   sampleUrl: string
   volume: number
   pan: number
-  steps: boolean[]
+  steps: Step[]
   chokeGroup: ChokeGroup | null
   muted: boolean
 }

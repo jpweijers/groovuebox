@@ -16,13 +16,11 @@ const { toggleStep, clearTrackSequence } = useGroovebox()
     {{ currentStep }}
     <div class="steps">
       <button
-        v-for="(active, index) in track.steps"
+        v-for="(step, index) in track.steps"
         :key="index"
         type="button"
         class="step"
-        :class="{ active, current: index === currentStep }"
-        :aria-label="`Step ${index + 1}`"
-        :aria-pressed="active"
+        :class="{ active: step.active, current: index === currentStep }"
         @click="toggleStep(track.id, index)"
       >
         <span aria-hidden="true"></span>

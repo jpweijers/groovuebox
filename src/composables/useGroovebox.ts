@@ -33,14 +33,15 @@ export function useGroovebox() {
   function toggleStep(id: string, index: number) {
     const track = findTrack(id)
     if (track) {
-      track.steps[index] = !track.steps[index]
+      track.steps[index]!.active = !track.steps[index]!.active
     }
   }
 
   function clearTrackSequence(id: string) {
     const track = findTrack(id)
-    if (track) {
-      track.steps.fill(false)
+    if (!track) return
+    for (const step of track.steps) {
+      step.active = false
     }
   }
 

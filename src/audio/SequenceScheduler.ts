@@ -51,7 +51,7 @@ export class SequencerScheduler {
 
   private scheduleStep(step: number, time: number): void {
     for (const track of this.options.getTracks()) {
-      if (track.steps[step] && track.sampleUrl) {
+      if (track.steps[step]!.active && track.sampleUrl) {
         audioEngine.playSample(track.id, time, track.chokeGroup)
       }
     }
