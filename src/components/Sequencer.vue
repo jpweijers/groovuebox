@@ -1,9 +1,10 @@
 <script lang="ts" setup>
 import type { Track } from '@/domain/track.interface.ts'
+import { useGroovebox } from '@/composables/useGroovebox.ts'
 
 const { track } = defineProps<{ track: Track; currentStep: number }>()
 
-defineEmits(['toggle', 'clear'])
+const { toggleStep, clearSelectedTrack } = useGroovebox()
 </script>
 
 <template>
@@ -22,13 +23,13 @@ defineEmits(['toggle', 'clear'])
         :class="{ active, current: index === currentStep }"
         :aria-label="`Step ${index + 1}`"
         :aria-pressed="active"
-        @click="$emit('toggle', index)"
+        @click="toggleStep(index)"
       >
         <span aria-hidden="true"></span>
       </button>
     </div>
     <footer>
-      <button type="button" class="clear" @click="$emit('clear')">Clear track</button>
+      <button type="button" class="clear" @click="clearSelectedTrack()">Clear track</button>
     </footer>
   </section>
 </template>

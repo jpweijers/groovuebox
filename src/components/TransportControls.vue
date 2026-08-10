@@ -7,8 +7,8 @@ const { state, play, stop } = useGroovebox()
 <template>
   <section>
     <div class="controls">
-      <button class="start" @click="play()">Play</button>
-      <button class="stop" @click="stop()">Stop</button>
+      <button class="start" @click="play">Play</button>
+      <button class="stop" @click="stop">Stop</button>
       <span class="bpm">BPM: {{ state.tempo }}</span>
     </div>
   </section>

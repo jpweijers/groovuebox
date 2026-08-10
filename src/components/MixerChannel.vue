@@ -1,30 +1,34 @@
 <script lang="ts" setup>
 import type { Track } from '@/domain/track.interface.ts'
 import type { ChokeGroup } from '@/domain/choke-groups.enum.ts'
+import { useGroovebox } from '@/composables/useGroovebox.ts'
 
 const { track, selected } = defineProps<{ track: Track; selected: boolean }>()
 
 const emit = defineEmits<{
   select: []
-  changeVolume: [number]
-  changePan: [number]
-  changeCokeGroup: [ChokeGroup]
 }>()
+
+const { setTrackVolume, setTrackPan, setTrackChokeGroup } = useGroovebox()
 
 function changeVolume(event: InputEvent): void {
   const input = event.target as HTMLInputElement
-  emit('changeVolume', Number(input.value))
+  setTrackVolume(track.id, Number(input.value))
 }
 
 function changePan(event: InputEvent): void {
   const input = event.target as HTMLInputElement
-  emit('changePan', Number(input.value))
+  setTrackPan(track.id, Number(input.value))
+}
+
+function centerPan(): void {
+  setTrackPan(track.id, 0)
 }
 
 function changeChokeGroup(event: Event): void {
   const input = event.target as HTMLInputElement
   const group = input.value === '' ? null : (Number(input.value) as ChokeGroup)
-  emit('changeCokeGroup', group)
+  setTrackChokeGroup(track.id, group)
 }
 
 function formatPan() {
@@ -70,6 +74,7 @@ function formatPan() {
         step="0.01"
         :value="track.pan"
         @input="changePan"
+        @dblclick.prevent="centerPan()"
       />
     </div>
 

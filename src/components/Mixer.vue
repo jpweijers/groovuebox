@@ -1,16 +1,11 @@
 <script lang="ts" setup>
 import type { Track } from '@/domain/track.interface.ts'
 import MixerChannel from '@/components/MixerChannel.vue'
-import type { ChokeGroup } from '@/domain/choke-groups.enum.ts'
+import { useGroovebox } from '@/composables/useGroovebox.ts'
 
 const { tracks, selected } = defineProps<{ tracks: Track[]; selected: number }>()
 
-defineEmits<{
-  select: [index: number]
-  changeVolume: [id: string, volume: number]
-  changePan: [id: string, pan: number]
-  changeChokeGroup: [id: string, group: ChokeGroup]
-}>()
+const { selectTrack } = useGroovebox()
 </script>
 
 <template>
@@ -25,10 +20,7 @@ defineEmits<{
         :track="track"
         :selected="selected === index"
         :key="track.id"
-        @select="$emit('select', index)"
-        @changeVolume="(volume) => $emit('changeVolume', track.id, volume)"
-        @changePan="(pan) => $emit('changePan', track.id, pan)"
-        @changeCokeGroup="(group) => $emit('changeChokeGroup', track.id, group)"
+        @select="selectTrack(index)"
       />
     </div>
   </section>

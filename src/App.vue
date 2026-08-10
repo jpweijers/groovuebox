@@ -4,15 +4,7 @@ import { useGroovebox } from '@/composables/useGroovebox.ts'
 import TransportControls from '@/components/TransportControls.vue'
 import Mixer from '@/components/Mixer.vue'
 
-const {
-  state,
-  selectTrack,
-  toggleStep,
-  clearSelectedTrack,
-  setTrackVolume,
-  setTrackChokeGroup,
-  setTrackPan,
-} = useGroovebox()
+const { state } = useGroovebox()
 </script>
 
 <template>
@@ -24,21 +16,9 @@ const {
 
     <TransportControls />
 
-    <Mixer
-      :tracks="state.tracks"
-      :selected="state.selectedTrack"
-      @select="(index) => selectTrack(index)"
-      @changeVolume="(id, volume) => setTrackVolume(id, volume)"
-      @changePan="(id, pan) => setTrackPan(id, pan)"
-      @changeChokeGroup="(id, group) => setTrackChokeGroup(id, group)"
-    />
+    <Mixer :tracks="state.tracks" :selected="state.selectedTrack" />
 
-    <Sequencer
-      :track="state.tracks[state.selectedTrack]!"
-      :current-step="state.currentStep"
-      @toggle="(index: number) => toggleStep(index)"
-      @clear="clearSelectedTrack()"
-    />
+    <Sequencer :track="state.tracks[state.selectedTrack]!" :current-step="state.currentStep" />
   </div>
 </template>
 
