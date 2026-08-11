@@ -14,6 +14,7 @@ class AudioEngine {
   private readonly chokeSources = new Map<string, AudioBufferSourceNode>()
   private readonly trackPanners = new Map<string, StereoPannerNode>()
   private readonly trackMuteGains = new Map<string, GainNode>()
+  private readonly velocityGains = new Map<string, GainNode>()
 
   private getContext(): AudioContext {
     if (!this.context) {
@@ -54,12 +55,13 @@ class AudioEngine {
     )
   }
 
-  playSample(id: string, time: number, chokeGroup: ChokeGroup): void {
+  playSample(id: string, time: number, chokeGroup: ChokeGroup, velocity: number): void {
     const context = this.getContext()
     const buffer = this.buffers.get(id)
     const gain = this.trackGains.get(id)
+    const velocityGain = this.velocityGains.get(id)
 
-    if (!buffer || !gain) {
+    if (!buffer || !gain || !velocityGain) {
       throw new Error(`Could not load sample "${id}"`)
     }
 
@@ -75,7 +77,8 @@ class AudioEngine {
     const source = context.createBufferSource()
 
     source.buffer = buffer
-    source.connect(gain)
+    velocityGain.gain.value = velocity
+    source.connect(velocityGain)
 
     if (chokeGroup) {
       this.chokeSources.set(chokeGroup.toString(), source)
@@ -152,16 +155,19 @@ class AudioEngine {
 
     const context = this.getContext()
 
+    const velocityGain = context.createGain()
     const gain = context.createGain()
     const panner = context.createStereoPanner()
     const muteGain = context.createGain()
 
+    velocityGain.connect(gain)
     gain.connect(panner)
     panner.connect(muteGain)
     muteGain.connect(this.masterGain!)
 
     muteGain.gain.value = 1
 
+    this.velocityGains.set(id, velocityGain)
     this.trackGains.set(id, gain)
     this.trackPanners.set(id, panner)
     this.trackMuteGains.set(id, muteGain)

@@ -45,6 +45,14 @@ export function useGroovebox() {
     }
   }
 
+  function clearAllTracks(): void {
+    for (const track of persistedState.value.tracks) {
+      for (const step of track.steps) {
+        step.active = false
+      }
+    }
+  }
+
   async function loadSamples(): Promise<void> {
     if (samplesLoaded) return
 
@@ -115,7 +123,7 @@ export function useGroovebox() {
     if (track) {
       track.muted = !track.muted
     }
-    syncAudibleTracks()
+    _syncAudibleTracks()
   }
 
   function toggleSolo(id: string): void {
@@ -123,7 +131,7 @@ export function useGroovebox() {
 
     runtimeState.value.soloedTrackIds = soloedTrack ? [] : [id]
 
-    syncAudibleTracks()
+    _syncAudibleTracks()
   }
 
   function isTrackSoloed(id: string): boolean {
@@ -134,13 +142,20 @@ export function useGroovebox() {
     return false
   }
 
-  function syncAudibleTracks(): void {
-    for (const track of persistedState.value.tracks) {
-      audioEngine.setTrackMute(track.id, !isTrackAudible(track))
+  function setTrackVelocity(id: string, step: number, velocity: number): void {
+    const track = findTrack(id)
+    if (track) {
+      track.steps[step]!.velocity = velocity
     }
   }
 
-  function isTrackAudible(track: Track): boolean {
+  function _syncAudibleTracks(): void {
+    for (const track of persistedState.value.tracks) {
+      audioEngine.setTrackMute(track.id, !_isTrackAudible(track))
+    }
+  }
+
+  function _isTrackAudible(track: Track): boolean {
     const soloedIds = runtimeState.value.soloedTrackIds
 
     return soloedIds.length > 0 ? soloedIds.includes(track.id) : !track.muted
@@ -151,6 +166,7 @@ export function useGroovebox() {
     selectTrack,
     toggleStep,
     clearTrackSequence,
+    clearAllTracks,
     loadSamples,
     play,
     stop,
@@ -161,5 +177,6 @@ export function useGroovebox() {
     toggleMute,
     toggleSolo,
     isTrackSoloed,
+    setTrackVelocity,
   }
 }
