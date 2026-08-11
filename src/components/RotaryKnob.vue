@@ -11,12 +11,14 @@ const props = withDefaults(
     defaultValue: number
     label?: string
     formatValue?: (value: number) => string
+    mode?: 'log' | 'linear'
   }>(),
   {
     min: 0,
     max: 100,
     step: 1,
     size: 52,
+    mode: 'linear',
     formatValue: (value: number) => String(value),
   },
 )
@@ -46,11 +48,7 @@ watch(
 
 const formattedValue = computed(() => props.formatValue(snapValue(previewValue.value)))
 
-const valueRange = computed(() => props.max - props.min)
-
-const valueRatio = computed(() => {
-  return (previewValue.value - props.min) / valueRange.value
-})
+const valueRatio = computed(() => valueToRatio(previewValue.value))
 
 const angle = computed(() => KNOB_START_ANGLE + valueRatio.value * KNOB_SWEEP_ANGLE)
 
@@ -73,6 +71,26 @@ function resetValue(): void {
   commitValue()
 }
 
+function valueToRatio(value: number): number {
+  const clamped = Math.min(props.max, Math.max(props.min, value))
+
+  if (props.mode === 'log') {
+    return Math.log(clamped / props.min) / Math.log(props.max / props.min)
+  }
+
+  return (clamped - props.min) / (props.max - props.min)
+}
+
+function ratioToValue(ratio: number): number {
+  const clamped = Math.min(1, Math.max(0, ratio))
+
+  if (props.mode === 'log') {
+    return props.min * Math.pow(props.max / props.min, clamped)
+  }
+
+  return props.min + clamped * (props.max - props.min)
+}
+
 function snapValue(value: number): number {
   const clamped = Math.min(props.max, Math.max(props.min, value))
   const steps = Math.round((clamped - props.min) / props.step)
@@ -83,7 +101,7 @@ function snapValue(value: number): number {
 
 let pointerId: number | null = null
 let startY = 0
-let startValue = 0
+let startRatio = 0
 let moved = false
 
 function startDrag(event: PointerEvent): void {
@@ -95,7 +113,7 @@ function startDrag(event: PointerEvent): void {
 
   pointerId = event.pointerId
   startY = event.clientY
-  startValue = previewValue.value
+  startRatio = valueToRatio(previewValue.value)
   moved = false
   dragging.value = true
 
@@ -112,9 +130,11 @@ function moveDrag(event: PointerEvent): void {
   if (!moved && Math.abs(distance) < DRAG_THRESHOLD_PX) return
 
   moved = true
-  const change = (distance / FULL_RANGE_DRAG_PX) * valueRange.value
 
-  updateValue(startValue + change)
+  const ratioChange = distance / FULL_RANGE_DRAG_PX
+  const nextValue = ratioToValue(startRatio + ratioChange)
+
+  updateValue(nextValue)
 }
 
 function finishDrag(event: PointerEvent): void {

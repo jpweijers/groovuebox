@@ -49,6 +49,7 @@ function formatFilter(filter: number): string {
       :max="2000"
       :default-value="2000"
       :size="40"
+      mode="log"
       label="decay"
       :format-value="formatDecay"
       @update:model-value="(decay) => setTrackDecay(track.id, decay)"
@@ -60,6 +61,7 @@ function formatFilter(filter: number): string {
       :size="40"
       :default-value="20_000"
       :format-value="formatFilter"
+      mode="log"
       label="filter"
       @update:model-value="(filter) => setTrackFilter(track.id, filter)"
     />
