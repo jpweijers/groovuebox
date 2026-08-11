@@ -51,11 +51,17 @@ export function useGroovebox() {
     }
   }
 
-  function clearAllTracks(): void {
-    for (const track of persistedState.value.tracks) {
-      for (const step of track.steps) {
-        step.active = false
-      }
+  async function resetAllTracks(): Promise<void> {
+    scheduler.stop()
+    await audioEngine.close()
+
+    samplesLoaded = false
+
+    persistedState.value = createGroovebox()
+    runtimeState.value = {
+      isPlaying: false,
+      currentStep: 0,
+      soloedTrackIds: [],
     }
   }
 
@@ -201,7 +207,7 @@ export function useGroovebox() {
     selectTrack,
     toggleStep,
     clearTrackSequence,
-    clearAllTracks,
+    resetAllTracks,
     resetTrackVelocities,
     loadSamples,
     play,

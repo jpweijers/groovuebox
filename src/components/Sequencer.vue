@@ -25,7 +25,7 @@ const beats = computed(() => {
       <span> {{ track.name }} </span>
     </header>
     <div class="steps">
-      <div v-for="(beat, beatIndex) in beats" class="beat">
+      <div v-for="(beat, beatIndex) in beats" :key="beatIndex" class="beat">
         <SequencerStep
           v-for="{ step, index } in beat"
           :key="index"

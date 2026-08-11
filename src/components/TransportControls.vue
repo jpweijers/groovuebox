@@ -2,7 +2,7 @@
 import { useGroovebox } from '@/composables/useGroovebox.ts'
 import TempoControl from '@/components/TempoControl.vue'
 
-const { play, stop, clearAllTracks } = useGroovebox()
+const { play, stop, resetAllTracks } = useGroovebox()
 </script>
 
 <template>
@@ -13,7 +13,7 @@ const { play, stop, clearAllTracks } = useGroovebox()
 
       <TempoControl />
 
-      <button class="stop" @click="clearAllTracks">Clear All</button>
+      <button class="stop" @click="resetAllTracks">Clear All</button>
     </div>
   </section>
 </template>

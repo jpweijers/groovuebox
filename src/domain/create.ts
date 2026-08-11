@@ -37,7 +37,7 @@ function createTrack({ name, url, chokeGroup }: CreateTrackInput): Track {
     swing: 50,
     swingDivision: 8,
     offset: 0,
-    steps: Array(16).fill({ active: false, velocity: 1 }),
+    steps: Array.from({ length: 16 }, () => ({ active: false, velocity: 1 })),
     chokeGroup: chokeGroup ?? null,
     muted: false,
   }

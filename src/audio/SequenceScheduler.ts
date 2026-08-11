@@ -1,10 +1,22 @@
 import type { Track } from '@/domain/track.interface'
 import { audioEngine } from './AudioEngine'
+import type { ChokeGroup } from '@/domain/choke-groups.enum.ts'
+
+const SCHEDULER_INTERVAL_MS = 25
+const AUDIO_LOOKAHEAD_SECONDS = 0.1
+const START_DELAY_SECONDS = 0.05
 
 type SchedulerOptions = {
   getTempo: () => number
   getTracks: () => Track[]
   onStep: (step: number) => void
+}
+
+interface ScheduledHit {
+  trackId: string
+  time: number
+  chokeGroup: ChokeGroup
+  velocity: number
 }
 
 export class SequencerScheduler {
@@ -13,16 +25,22 @@ export class SequencerScheduler {
   private nextStepTime = 0
   private readonly visualTimers = new Set<ReturnType<typeof setTimeout>>()
 
+  private readonly scheduledHits: ScheduledHit[] = []
+
   constructor(private readonly options: SchedulerOptions) {}
 
   start(): void {
     if (this.timer) return
 
     this.nextStep = 0
-    this.nextStepTime = audioEngine.currentTime + 0.05
+    this.scheduledHits.length = 0
+
+    const maximumEarlyOffset = this.getMaximumEarlyOffset()
+    this.nextStepTime = audioEngine.currentTime + maximumEarlyOffset + START_DELAY_SECONDS
 
     this.schedule()
-    this.timer = setInterval(() => this.schedule(), 25)
+
+    this.timer = setInterval(() => this.schedule(), SCHEDULER_INTERVAL_MS)
   }
 
   stop(): void {
@@ -38,30 +56,58 @@ export class SequencerScheduler {
     this.visualTimers.clear()
     this.nextStep = 0
     this.options.onStep(0)
+    this.scheduledHits.length = 0
   }
 
   private schedule(): void {
-    const scheduleUntil = audioEngine.currentTime + 0.1
+    const now = audioEngine.currentTime
+    const dispatchUntil = now + AUDIO_LOOKAHEAD_SECONDS
+    const maximumEarlyOffset = this.getMaximumEarlyOffset()
 
+    const scheduleUntil = dispatchUntil + maximumEarlyOffset
+
+    this.scheduleHits(scheduleUntil)
+    this.dispatchHits(dispatchUntil)
+  }
+
+  private scheduleHits(scheduleUntil: number) {
     while (this.nextStepTime < scheduleUntil) {
-      this.scheduleStep(this.nextStep, this.nextStepTime)
+      this.scheduleHit(this.nextStep, this.nextStepTime)
+      this.scheduleVisibleStep(this.nextStep, this.nextStepTime)
       this.advance()
     }
   }
 
-  private scheduleStep(step: number, time: number): void {
-    for (const track of this.options.getTracks()) {
-      if (track.steps[step]!.active && track.sampleUrl) {
-        const swungTime = this.getTrackHitTime(track, step, time, this.stepDuration)
-        audioEngine.playSample(track.id, swungTime, track.chokeGroup, track.steps[step]!.velocity)
-      }
-    }
+  private dispatchHits(dispatchUntil: number) {
+    this.scheduledHits.sort((a, b) => a.time - b.time)
 
-    const delay = Math.max(0, (time - audioEngine.currentTime) * 1000)
+    while (this.scheduledHits.length && this.scheduledHits[0]!.time < dispatchUntil) {
+      const hit = this.scheduledHits.shift()!
+      audioEngine.playSample(hit.trackId, hit.time, hit.chokeGroup, hit.velocity)
+    }
+  }
+
+  private scheduleHit(stepIndex: number, straightTime: number): void {
+    for (const track of this.options.getTracks()) {
+      const step = track.steps[stepIndex]
+
+      if (!step?.active || !track.sampleUrl) continue
+
+      this.scheduledHits.push({
+        trackId: track.id,
+        time: this.getTrackHitTime(track, stepIndex, straightTime),
+        chokeGroup: track.chokeGroup,
+        velocity: step.velocity,
+      })
+    }
+  }
+
+  private scheduleVisibleStep(stepIndex: number, straightTime: number): void {
+    const delay = Math.max(0, (straightTime - audioEngine.currentTime) * 1000)
 
     const timer = setTimeout(() => {
       this.visualTimers.delete(timer)
-      this.options.onStep(step)
+      this.options.onStep(stepIndex)
     }, delay)
 
     this.visualTimers.add(timer)
@@ -72,34 +118,49 @@ export class SequencerScheduler {
   }
 
   private advance(): void {
-    const secondsPerStep = 60 / this.options.getTempo() / 4
-
     this.nextStep = (this.nextStep + 1) % 16
-    this.nextStepTime += secondsPerStep
+    this.nextStepTime += this.stepDuration
   }
 
   private isSwungStep(stepIndex: number, division: 8 | 16): boolean {
     return division === 16 ? stepIndex % 2 === 1 : stepIndex % 4 === 2
   }
 
-  private getSwingOffset(track: Track, stepIndex: number, stepDuration: number): number {
+  private getSwingOffset(track: Track, stepIndex: number): number {
     if (!this.isSwungStep(stepIndex, track.swingDivision)) {
       return 0
     }
 
-    const subdivisionDuration = track.swingDivision === 16 ? stepDuration : stepDuration * 2
+    return this.calculateSwingOffset(track)
+  }
+
+  private getTrackHitTime(track: Track, stepIndex: number, straightTime: number): number {
+    const swingOffset = this.getSwingOffset(track, stepIndex)
+    const trackOffset = this.calculateTrackOffset(track)
+    return straightTime + swingOffset + trackOffset
+  }
+
+  private calculateSwingOffset(track: Track): number {
+    const subdivisionDuration =
+      track.swingDivision === 16 ? this.stepDuration : this.stepDuration * 2
 
     return subdivisionDuration * ((2 * track.swing) / 100 - 1)
   }
 
-  private getTrackHitTime(
-    track: Track,
-    stepIndex: number,
-    straightTime: number,
-    stepDuration: number,
-  ): number {
-    const swingOffset = this.getSwingOffset(track, stepIndex, stepDuration)
-    const trackOffset = track.offset / 1000
-    return straightTime + swingOffset + trackOffset
+  private calculateTrackOffset(track: Track): number {
+    return track.offset / 1000
+  }
+
+  private getMaximumEarlyOffset(): number {
+    let maximumEarlyOffset = 0
+
+    for (const track of this.options.getTracks()) {
+      const trackOffset = this.calculateTrackOffset(track)
+      const swingOffset = this.calculateSwingOffset(track)
+
+      maximumEarlyOffset = Math.max(maximumEarlyOffset, Math.abs(trackOffset + swingOffset))
+    }
+
+    return Math.max(0, maximumEarlyOffset)
   }
 }
