@@ -5,6 +5,11 @@ interface SampleDefinition {
   url: string
 }
 
+interface ActiveVoice {
+  source: AudioBufferSourceNode
+  gain: GainNode
+}
+
 class AudioEngine {
   private context: AudioContext | null = null
   private masterGain: GainNode | null = null
@@ -18,6 +23,9 @@ class AudioEngine {
   private readonly trackDistortions = new Map<string, WaveShaperNode>()
 
   private readonly trackSources = new Map<string, AudioBufferSourceNode>()
+
+  private readonly trackVoices = new Map<string, ActiveVoice>()
+  private readonly chokeVoices = new Map<string, ActiveVoice>()
 
   private getContext(): AudioContext {
     if (!this.context) {
@@ -74,48 +82,57 @@ class AudioEngine {
       throw new Error(`Could not load sample "${id}"`)
     }
 
+    const voicesToRelease = new Set<ActiveVoice>()
+    const trackVoice = this.trackVoices.get(id)
+    if (trackVoice) voicesToRelease.add(trackVoice)
+
     const startTime = time ?? context.currentTime
 
     if (chokeGroup) {
-      const previousSource = this.chokeSources.get(chokeGroup.toString())
-      if (previousSource) {
-        previousSource.stop(startTime)
-      }
+      const chokeVoice = this.chokeVoices.get(chokeGroup.toString())
+      if (chokeVoice) voicesToRelease.add(chokeVoice)
     }
 
-    const previousSource = this.trackSources.get(id)
-    if (previousSource) {
-      previousSource.stop(startTime)
+    for (const voice of voicesToRelease) {
+      this.releaseVoice(voice, startTime)
     }
 
     const source = context.createBufferSource()
     source.buffer = buffer
 
-    const velocityGain = context.createGain()
-    velocityGain.connect(distortion)
-    velocityGain.gain.setValueAtTime(Math.min(1, Math.max(0, velocity)), time)
+    const voiceGain = context.createGain()
+    const attack = 0.002
+    const safeVelocity = Math.min(1, Math.max(0, velocity))
+    voiceGain.gain.setValueAtTime(0, startTime)
+    voiceGain.gain.linearRampToValueAtTime(safeVelocity, startTime + attack)
+    voiceGain.connect(distortion)
 
     source.playbackRate.setValueAtTime(Math.pow(2, pitch / 12), startTime)
 
-    source.connect(velocityGain)
+    source.connect(voiceGain)
+
+    const voice: ActiveVoice = { source, gain: voiceGain }
 
     if (chokeGroup) {
-      this.chokeSources.set(chokeGroup.toString(), source)
+      this.chokeVoices.set(chokeGroup.toString(), voice)
       source.addEventListener('ended', () => {
-        if (this.chokeSources.get(chokeGroup.toString()) === source) {
-          this.chokeSources.delete(chokeGroup.toString())
+        if (this.chokeVoices.get(chokeGroup.toString())?.source === source) {
+          this.chokeVoices.delete(chokeGroup.toString())
         }
       })
     }
 
+    this.trackVoices.set(id, voice)
+
     source.start(startTime)
-    this.trackSources.set(id, source)
 
     if (decay < 2000) {
-      const decaySeconds = decay / 1000
-      const timeConstant = decaySeconds / 5
-      velocityGain.gain.setTargetAtTime(0.0001, startTime, timeConstant)
-      source.stop(startTime + decaySeconds)
+      const decayEnd = startTime + decay / 1000
+      const attackEnd = startTime + attack
+
+      voiceGain.gain.exponentialRampToValueAtTime(0.0001, Math.max(decayEnd, attackEnd + 0.001))
+
+      source.stop(Math.max(decayEnd, attackEnd + 0.001))
     }
   }
 
@@ -249,6 +266,22 @@ class AudioEngine {
     }
 
     return curve
+  }
+
+  private releaseVoice(voice: ActiveVoice, stopTime: number): void {
+    const context = this.getContext()
+
+    const releaseDuration = 0.005
+    const releaseStart = Math.max(context.currentTime, stopTime - releaseDuration)
+
+    const gain = voice.gain.gain
+    const currentValue = gain.value
+
+    gain.cancelScheduledValues(releaseStart)
+    gain.setValueAtTime(currentValue, releaseStart)
+    gain.linearRampToValueAtTime(0, stopTime)
+
+    voice.source.stop(stopTime)
   }
 }
 

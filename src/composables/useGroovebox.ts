@@ -90,6 +90,8 @@ export function useGroovebox() {
       if (track.sampleUrl) {
         audioEngine.setTrackVolume(track.id, track.volume)
         audioEngine.setTrackPan(track.id, track.pan)
+        audioEngine.setTrackDistortion(track.id, track.distortion)
+        audioEngine.setTrackFilter(track.id, track.filter)
       }
     }
 
@@ -101,6 +103,7 @@ export function useGroovebox() {
 
     await audioEngine.resume()
     await loadSamples()
+    _syncAudibleTracks()
 
     runtimeState.value.isPlaying = true
     scheduler.start()
@@ -260,6 +263,6 @@ export function useGroovebox() {
     setTrackPitch,
     setTrackDecay,
     setTrackFilter,
-    setTrackDistortion
+    setTrackDistortion,
   }
 }

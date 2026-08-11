@@ -12,6 +12,7 @@ const newBpm = computed(() => {
 
 <template>
   <details>
+    <summary>Tools</summary>
     <div>
       <h2>BPM Calculator</h2>
     </div>
