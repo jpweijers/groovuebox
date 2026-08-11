@@ -17,6 +17,8 @@ interface ScheduledHit {
   time: number
   chokeGroup: ChokeGroup
   velocity: number
+  pitch: number
+  decay: number
 }
 
 export class SequencerScheduler {
@@ -83,7 +85,14 @@ export class SequencerScheduler {
 
     while (this.scheduledHits.length && this.scheduledHits[0]!.time < dispatchUntil) {
       const hit = this.scheduledHits.shift()!
-      audioEngine.playSample(hit.trackId, hit.time, hit.chokeGroup, hit.velocity)
+      audioEngine.playSample(
+        hit.trackId,
+        hit.time,
+        hit.chokeGroup,
+        hit.velocity,
+        hit.pitch,
+        hit.decay,
+      )
     }
   }
 
@@ -98,6 +107,8 @@ export class SequencerScheduler {
         time: this.getTrackHitTime(track, stepIndex, straightTime),
         chokeGroup: track.chokeGroup,
         velocity: step.velocity,
+        pitch: track.pitch,
+        decay: track.decay,
       })
     }
   }

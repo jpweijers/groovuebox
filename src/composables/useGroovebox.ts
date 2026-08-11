@@ -211,6 +211,7 @@ export function useGroovebox() {
     const track = findTrack(id)
     if (track) {
       track.filter = filter
+      audioEngine.setTrackFilter(track.id, track.filter)
     }
   }
 

@@ -14,6 +14,7 @@ class AudioEngine {
   private readonly chokeSources = new Map<string, AudioBufferSourceNode>()
   private readonly trackPanners = new Map<string, StereoPannerNode>()
   private readonly trackMuteGains = new Map<string, GainNode>()
+  private readonly trackFilters = new Map<string, BiquadFilterNode>()
 
   private getContext(): AudioContext {
     if (!this.context) {
@@ -54,7 +55,14 @@ class AudioEngine {
     )
   }
 
-  playSample(id: string, time: number, chokeGroup: ChokeGroup, velocity: number): void {
+  playSample(
+    id: string,
+    time: number,
+    chokeGroup: ChokeGroup,
+    velocity: number,
+    pitch: number,
+    decay: number,
+  ): void {
     const context = this.getContext()
     const buffer = this.buffers.get(id)
     const gain = this.trackGains.get(id)
@@ -78,6 +86,18 @@ class AudioEngine {
     const velocityGain = context.createGain()
     velocityGain.connect(gain)
     velocityGain.gain.setValueAtTime(Math.min(1, Math.max(0, velocity)), time)
+
+    // if (decay < 2000) {
+    //   console.log('decayued')
+    //   const decaySeconds = decay / 1000
+    //   const timeConstant = decaySeconds / 5
+    //
+    //   velocityGain.gain.setTargetAtTime(0.0001, startTime, timeConstant)
+    //   source.stop(startTime + decaySeconds)
+    // }
+
+    source.playbackRate.setValueAtTime(Math.pow(2, pitch / 12), startTime)
+
     source.connect(velocityGain)
 
     if (chokeGroup) {
@@ -90,6 +110,13 @@ class AudioEngine {
     }
 
     source.start(startTime)
+
+    if (decay < 2000) {
+      const decaySeconds = decay / 1000
+      const timeConstant = decaySeconds / 5
+      velocityGain.gain.setTargetAtTime(0.0001, startTime, timeConstant)
+      source.stop(startTime + decaySeconds)
+    }
   }
 
   setTrackVolume(id: string, volume: number): void {
@@ -130,6 +157,18 @@ class AudioEngine {
     muteGain.gain.value = mute ? 0 : 1
   }
 
+  setTrackFilter(id: string, frequency: number): void {
+    const context = this.getContext()
+    const filter = this.trackFilters.get(id)
+
+    if (!filter) return
+
+    const safeFrequency = Math.min(context.sampleRate / 2, Math.max(20, frequency))
+
+    filter.frequency.cancelScheduledValues(context.currentTime)
+    filter.frequency.setTargetAtTime(safeFrequency, context.currentTime, 0.01)
+  }
+
   async close(): Promise<void> {
     if (!this.context) return
 
@@ -160,8 +199,14 @@ class AudioEngine {
     const panner = context.createStereoPanner()
     const muteGain = context.createGain()
 
+    const filter = context.createBiquadFilter()
+    filter.type = 'lowpass'
+    filter.frequency.value = 20_000
+    filter.Q.value = 0.7
+
     velocityGain.connect(gain)
-    gain.connect(panner)
+    gain.connect(filter)
+    filter.connect(panner)
     panner.connect(muteGain)
     muteGain.connect(this.masterGain!)
 
@@ -170,6 +215,7 @@ class AudioEngine {
     this.trackGains.set(id, gain)
     this.trackPanners.set(id, panner)
     this.trackMuteGains.set(id, muteGain)
+    this.trackFilters.set(id, filter)
   }
 }
 
