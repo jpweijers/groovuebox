@@ -17,6 +17,8 @@ class AudioEngine {
   private readonly trackFilters = new Map<string, BiquadFilterNode>()
   private readonly trackDistortions = new Map<string, WaveShaperNode>()
 
+  private readonly trackSources = new Map<string, AudioBufferSourceNode>()
+
   private getContext(): AudioContext {
     if (!this.context) {
       this.context = new AudioContext()
@@ -81,6 +83,11 @@ class AudioEngine {
       }
     }
 
+    const previousSource = this.trackSources.get(id)
+    if (previousSource) {
+      previousSource.stop(startTime)
+    }
+
     const source = context.createBufferSource()
     source.buffer = buffer
 
@@ -102,6 +109,7 @@ class AudioEngine {
     }
 
     source.start(startTime)
+    this.trackSources.set(id, source)
 
     if (decay < 2000) {
       const decaySeconds = decay / 1000
@@ -180,6 +188,8 @@ class AudioEngine {
     this.trackGains.clear()
     this.trackPanners.clear()
     this.trackMuteGains.clear()
+    this.trackSources.clear()
+    this.chokeSources.clear()
   }
 
   get currentTime(): number {

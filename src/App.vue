@@ -4,6 +4,7 @@ import { useGroovebox } from '@/composables/useGroovebox.ts'
 import TransportControls from '@/components/TransportControls.vue'
 import Mixer from '@/components/Mixer.vue'
 import { ref } from 'vue'
+import BpmCalculator from '@/components/BpmCalculator.vue'
 
 const { state } = useGroovebox()
 
@@ -22,6 +23,9 @@ const activeSwitch = ref(false)
     <Mixer :tracks="state.tracks" :selected="state.selectedTrack" />
 
     <Sequencer :track="state.tracks[state.selectedTrack]!" :current-step="state.currentStep" />
+
+    <br />
+    <BpmCalculator />
   </div>
 </template>
 

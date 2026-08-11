@@ -13,8 +13,8 @@ const tracks: CreateTrackInput[] = [
   { name: 'Snare', url: '/samples/snare.wav' },
   { name: 'Close Hat', url: '/samples/hh.wav', chokeGroup: 1 },
   { name: 'Open Hat', url: '/samples/oh.wav', chokeGroup: 1 },
-  { name: 'Track 5' },
-  { name: 'Track 6' },
+  { name: 'Jazz', url: '/samples/jazz.wav' },
+  { name: 'Bass', url: '/samples/bass_80_gm.wav' },
   { name: 'Track 7' },
   { name: 'Track 8' },
 ]
@@ -43,5 +43,6 @@ function createTrack({ name, url, chokeGroup }: CreateTrackInput): Track {
     decay: 2000,
     filter: 20_000,
     pitch: 0,
+    distortion: 0,
   }
 }
