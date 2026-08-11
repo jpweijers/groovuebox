@@ -2,6 +2,7 @@
 import type { Track } from '@/domain/track.interface.ts'
 import type { ChokeGroup } from '@/domain/choke-groups.enum.ts'
 import { useGroovebox } from '@/composables/useGroovebox.ts'
+import RotaryKnob from '@/components/RotaryKnob.vue'
 
 const { track, selected } = defineProps<{ track: Track; selected: boolean }>()
 
@@ -65,19 +66,17 @@ function formatPan() {
 
     <hr />
 
-    <div class="pan">
-      <output :for="`pan-${track.id}`">{{ formatPan() }}</output>
-      <input
-        :id="`pan-${track.id}`"
-        type="range"
-        min="-1"
-        max="1"
-        step="0.01"
-        :value="track.pan"
-        @input="changePan"
-        @dblclick.prevent="centerPan()"
-      />
-    </div>
+    <RotaryKnob
+      :model-value="track.pan"
+      :min="-1"
+      :max="1"
+      :step="0.01"
+      :default-value="0"
+      :format-value="formatPan"
+      @update:model-value="(pan) => setTrackPan(track.id, pan)"
+    />
+
+    <hr />
 
     <div class="channel-switches">
       <button

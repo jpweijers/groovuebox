@@ -8,7 +8,7 @@ const props = withDefaults(
     max?: number
     step?: number
     defaultValue: number
-    label: string
+    label?: string
     formatValue?: (value: number) => string
   }>(),
   {
@@ -148,7 +148,7 @@ function resetInteraction(): void {
 
 <template>
   <div class="rotary-control">
-    <span class="label">{{ label }}</span>
+    <span v-if="label" class="label">{{ label }}</span>
 
     <div
       class="knob"

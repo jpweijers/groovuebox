@@ -3,12 +3,8 @@ import Sequencer from '@/components/Sequencer.vue'
 import { useGroovebox } from '@/composables/useGroovebox.ts'
 import TransportControls from '@/components/TransportControls.vue'
 import Mixer from '@/components/Mixer.vue'
-import RotaryKnob from '@/components/RotaryKnob.vue'
-import { ref } from 'vue'
 
 const { state } = useGroovebox()
-
-const knob = ref(0)
 </script>
 
 <template>
@@ -23,9 +19,6 @@ const knob = ref(0)
     <Mixer :tracks="state.tracks" :selected="state.selectedTrack" />
 
     <Sequencer :track="state.tracks[state.selectedTrack]!" :current-step="state.currentStep" />
-
-    <hr />
-    <RotaryKnob v-model="knob" :default-value="0.5" :min="-1" :max="2" :step="0.01" label="knob" />
   </div>
 </template>
 
