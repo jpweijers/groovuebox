@@ -3,8 +3,11 @@ import Sequencer from '@/components/Sequencer.vue'
 import { useGroovebox } from '@/composables/useGroovebox.ts'
 import TransportControls from '@/components/TransportControls.vue'
 import Mixer from '@/components/Mixer.vue'
+import { ref } from 'vue'
 
 const { state } = useGroovebox()
+
+const activeSwitch = ref(false)
 </script>
 
 <template>
@@ -24,7 +27,7 @@ const { state } = useGroovebox()
 
 <style scoped>
 .groovebox {
-  width: min(1100px, calc(100vw - 64px));
+  width: min(1200px, calc(100vw - 64px));
   margin: 48px auto;
   padding: 28px;
   background: var(--panel);

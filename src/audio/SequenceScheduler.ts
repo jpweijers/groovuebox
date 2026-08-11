@@ -52,7 +52,8 @@ export class SequencerScheduler {
   private scheduleStep(step: number, time: number): void {
     for (const track of this.options.getTracks()) {
       if (track.steps[step]!.active && track.sampleUrl) {
-        audioEngine.playSample(track.id, time, track.chokeGroup, track.steps[step]!.velocity)
+        const swungTime = this.getTrackHitTime(track, step, time, this.stepDuration)
+        audioEngine.playSample(track.id, swungTime, track.chokeGroup, track.steps[step]!.velocity)
       }
     }
 
@@ -66,10 +67,39 @@ export class SequencerScheduler {
     this.visualTimers.add(timer)
   }
 
+  get stepDuration(): number {
+    return 60 / this.options.getTempo() / 4
+  }
+
   private advance(): void {
     const secondsPerStep = 60 / this.options.getTempo() / 4
 
     this.nextStep = (this.nextStep + 1) % 16
     this.nextStepTime += secondsPerStep
+  }
+
+  private isSwungStep(stepIndex: number, division: 8 | 16): boolean {
+    return division === 16 ? stepIndex % 2 === 1 : stepIndex % 4 === 2
+  }
+
+  private getSwingOffset(track: Track, stepIndex: number, stepDuration: number): number {
+    if (!this.isSwungStep(stepIndex, track.swingDivision)) {
+      return 0
+    }
+
+    const subdivisionDuration = track.swingDivision === 16 ? stepDuration : stepDuration * 2
+
+    return subdivisionDuration * ((2 * track.swing) / 100 - 1)
+  }
+
+  private getTrackHitTime(
+    track: Track,
+    stepIndex: number,
+    straightTime: number,
+    stepDuration: number,
+  ): number {
+    const swingOffset = this.getSwingOffset(track, stepIndex, stepDuration)
+    const trackOffset = track.offset / 1000
+    return straightTime + swingOffset + trackOffset
   }
 }

@@ -14,6 +14,12 @@ import { computed, ref } from 'vue'
 const persistedState = useStorage<PersistedState>('groovebox', createGroovebox())
 const runtimeState = ref<RuntimeState>({ isPlaying: false, currentStep: 0, soloedTrackIds: [] })
 
+for (const track of persistedState.value.tracks) {
+  track.swing ??= 50
+  track.swingDivision ??= 8
+  track.offset ??= 0
+}
+
 const state = computed<GrooveBoxState>(() => ({ ...persistedState.value, ...runtimeState.value }))
 
 const scheduler = new SequencerScheduler({
@@ -157,6 +163,27 @@ export function useGroovebox() {
     }
   }
 
+  function setTrackSwing(id: string, swing: number): void {
+    const track = findTrack(id)
+    if (track) {
+      track.swing = swing
+    }
+  }
+
+  function setTrackSwingDivision(id: string, swingDivision: 8 | 16): void {
+    const track = findTrack(id)
+    if (track) {
+      track.swingDivision = swingDivision
+    }
+  }
+
+  function setTrackOffset(id: string, offset: number): void {
+    const track = findTrack(id)
+    if (track) {
+      track.offset = offset
+    }
+  }
+
   function _syncAudibleTracks(): void {
     for (const track of persistedState.value.tracks) {
       audioEngine.setTrackMute(track.id, !_isTrackAudible(track))
@@ -187,5 +214,8 @@ export function useGroovebox() {
     toggleSolo,
     isTrackSoloed,
     setTrackVelocity,
+    setTrackSwing,
+    setTrackOffset,
+    setTrackSwingDivision,
   }
 }

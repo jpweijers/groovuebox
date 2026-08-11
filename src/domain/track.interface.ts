@@ -11,6 +11,9 @@ export interface Track {
   sampleUrl: string
   volume: number
   pan: number
+  swing: number
+  swingDivision: 8 | 16
+  offset: number
   steps: Step[]
   chokeGroup: ChokeGroup | null
   muted: boolean

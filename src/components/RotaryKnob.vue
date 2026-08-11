@@ -7,6 +7,7 @@ const props = withDefaults(
     min?: number
     max?: number
     step?: number
+    size?: number
     defaultValue: number
     label?: string
     formatValue?: (value: number) => string
@@ -15,6 +16,7 @@ const props = withDefaults(
     min: 0,
     max: 100,
     step: 1,
+    size: 52,
     formatValue: (value: number) => String(value),
   },
 )
@@ -54,6 +56,7 @@ const angle = computed(() => KNOB_START_ANGLE + valueRatio.value * KNOB_SWEEP_AN
 
 const knobStyle = computed(() => ({
   '--knob-angle': `${angle.value}deg`,
+  '--knob-size': `${props.size}px`,
 }))
 
 function updateValue(value: number): void {
@@ -186,8 +189,8 @@ function resetInteraction(): void {
 
 .knob {
   position: relative;
-  width: 52px;
-  height: 52px;
+  width: var(--knob-size);
+  height: var(--knob-size);
   cursor: ns-resize;
 }
 

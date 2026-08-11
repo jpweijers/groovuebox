@@ -3,6 +3,8 @@ import type { Track } from '@/domain/track.interface.ts'
 import type { ChokeGroup } from '@/domain/choke-groups.enum.ts'
 import { useGroovebox } from '@/composables/useGroovebox.ts'
 import RotaryKnob from '@/components/RotaryKnob.vue'
+import TrackTiming from '@/components/TrackTiming.vue'
+import Switch from '@/components/Switch.vue'
 
 const { track, selected } = defineProps<{ track: Track; selected: boolean }>()
 
@@ -16,15 +18,6 @@ const { setTrackVolume, setTrackPan, setTrackChokeGroup, toggleMute, toggleSolo,
 function changeVolume(event: InputEvent): void {
   const input = event.target as HTMLInputElement
   setTrackVolume(track.id, Number(input.value))
-}
-
-function changePan(event: InputEvent): void {
-  const input = event.target as HTMLInputElement
-  setTrackPan(track.id, Number(input.value))
-}
-
-function centerPan(): void {
-  setTrackPan(track.id, 0)
 }
 
 function changeChokeGroup(event: Event): void {
@@ -79,23 +72,17 @@ function formatPan() {
     <hr />
 
     <div class="channel-switches">
-      <button
-        type="button"
-        class="mute"
-        :class="{ active: track.muted }"
-        @click="toggleMute(track.id)"
+      <Switch :active="track.muted" tone="blue" @clicked="toggleMute(track.id)">M</Switch>
+      <Switch :active="isTrackSoloed(track.id)" tone="red" @clicked="toggleSolo(track.id)"
+        >S</Switch
       >
-        M
-      </button>
-      <button
-        type="button"
-        class="solo"
-        :class="{ active: isTrackSoloed(track.id) }"
-        @click="toggleSolo(track.id)"
-      >
-        S
-      </button>
     </div>
+
+    <hr />
+
+    <TrackTiming :track="track" />
+
+    <hr />
 
     <label :for="`choke-${track.id}`">Choke</label>
 
@@ -165,21 +152,6 @@ output {
   direction: rtl;
 }
 
-.pan {
-  display: grid;
-  justify-items: center;
-}
-
-.pan input {
-  width: 100%;
-  accent-color: var(--amber);
-}
-
-.pan output {
-  font-size: 0.7rem;
-  padding-bottom: 0.5rem;
-}
-
 select {
   width: 100%;
   padding: 6px;
@@ -201,27 +173,5 @@ select {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-small);
-}
-
-.mute {
-  --control-accent: var(--mute);
-  --control-active-bg: var(--mute-dark);
-  --control-glow: var(--mute-glow);
-}
-
-.solo {
-  --control-accent: var(--solo);
-  --control-active-bg: var(--solo-dark);
-  --control-glow: var(--solo-glow);
-}
-
-.mute.active,
-.solo.active {
-  color: #f5f5f5;
-  background: var(--control-active-bg);
-  border-color: var(--control-accent);
-  box-shadow:
-    inset 0 0 0 1px var(--control-accent),
-    0 0 10px var(--control-glow);
 }
 </style>
