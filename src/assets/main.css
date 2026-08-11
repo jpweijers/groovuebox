@@ -21,6 +21,7 @@
   --radius-small: 4px;
 
   --step-velocity: 50%;
+  --knob-angle: 1deg;
 
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   color: var(--text);
