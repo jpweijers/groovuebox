@@ -20,4 +20,5 @@ export interface Track {
   steps: Step[]
   chokeGroup: ChokeGroup | null
   muted: boolean
+  distortion: number
 }

@@ -30,7 +30,7 @@ defineEmits<{ clicked: [] }>()
 .switch {
   position: relative;
   min-width: 0;
-  padding: 7px 10px;
+  padding: 7px 7px;
   overflow: hidden;
   color: var(--text-muted);
   font: inherit;

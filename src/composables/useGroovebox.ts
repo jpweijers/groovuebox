@@ -21,6 +21,7 @@ for (const track of persistedState.value.tracks) {
   track.pitch ??= 0
   track.decay ??= 2_000
   track.filter ??= 20_000
+  track.distortion ??= 0
 }
 
 const state = computed<GrooveBoxState>(() => ({ ...persistedState.value, ...runtimeState.value }))
@@ -215,6 +216,14 @@ export function useGroovebox() {
     }
   }
 
+  function setTrackDistortion(id: string, amount: number): void {
+    const track = findTrack(id)
+    if (track) {
+      track.distortion = amount
+      audioEngine.setTrackDistortion(track.id, track.distortion)
+    }
+  }
+
   function _syncAudibleTracks(): void {
     for (const track of persistedState.value.tracks) {
       audioEngine.setTrackMute(track.id, !_isTrackAudible(track))
@@ -251,5 +260,6 @@ export function useGroovebox() {
     setTrackPitch,
     setTrackDecay,
     setTrackFilter,
+    setTrackDistortion
   }
 }

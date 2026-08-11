@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import type { Track } from '@/domain/track.interface.ts'
-import type { ChokeGroup } from '@/domain/choke-groups.enum.ts'
 import { useGroovebox } from '@/composables/useGroovebox.ts'
 import RotaryKnob from '@/components/RotaryKnob.vue'
 import TrackTiming from '@/components/TrackTiming.vue'
 import Switch from '@/components/Switch.vue'
 import Effects from '@/components/Effects.vue'
+import Choke from '@/components/Choke.vue'
 
 const { track, selected } = defineProps<{ track: Track; selected: boolean }>()
 
@@ -13,18 +13,11 @@ const emit = defineEmits<{
   select: []
 }>()
 
-const { setTrackVolume, setTrackPan, setTrackChokeGroup, toggleMute, toggleSolo, isTrackSoloed } =
-  useGroovebox()
+const { setTrackVolume, setTrackPan, toggleMute, toggleSolo, isTrackSoloed } = useGroovebox()
 
 function changeVolume(event: InputEvent): void {
   const input = event.target as HTMLInputElement
   setTrackVolume(track.id, Number(input.value))
-}
-
-function changeChokeGroup(event: Event): void {
-  const input = event.target as HTMLInputElement
-  const group = input.value === '' ? null : (Number(input.value) as ChokeGroup)
-  setTrackChokeGroup(track.id, group)
 }
 
 function formatPan() {
@@ -89,15 +82,7 @@ function formatPan() {
 
     <hr />
 
-    <label :for="`choke-${track.id}`">Choke</label>
-
-    <select :id="`choke-${track.id}`" :value="track.chokeGroup ?? ''" @change="changeChokeGroup">
-      <option value="">Off</option>
-      <option value="1">Group 1</option>
-      <option value="2">Group 2</option>
-      <option value="3">Group 3</option>
-      <option value="4">Group 4</option>
-    </select>
+    <Choke :track="track" />
   </article>
 </template>
 

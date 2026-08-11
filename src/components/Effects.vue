@@ -5,7 +5,7 @@ import { useGroovebox } from '@/composables/useGroovebox.ts'
 
 defineProps<{ track: Track }>()
 
-const { setTrackPitch, setTrackDecay, setTrackFilter } = useGroovebox()
+const { setTrackPitch, setTrackDecay, setTrackFilter, setTrackDistortion } = useGroovebox()
 
 function formatPitch(pitch: number): string {
   if (pitch === 0) return '-'
@@ -65,13 +65,23 @@ function formatFilter(filter: number): string {
       label="filter"
       @update:model-value="(filter) => setTrackFilter(track.id, filter)"
     />
+    <RotaryKnob
+      :model-value="track.distortion"
+      :min="0"
+      :max="1"
+      :step="0.01"
+      :size="40"
+      :default-value="0"
+      label="drive"
+      @update:model-value="(distortion) => setTrackDistortion(track.id, distortion)"
+    />
   </div>
 </template>
 
 <style scoped>
 .effects {
-  display: flex;
-  flex-flow: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   justify-content: center;
   gap: 8px;
 }

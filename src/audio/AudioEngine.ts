@@ -15,6 +15,7 @@ class AudioEngine {
   private readonly trackPanners = new Map<string, StereoPannerNode>()
   private readonly trackMuteGains = new Map<string, GainNode>()
   private readonly trackFilters = new Map<string, BiquadFilterNode>()
+  private readonly trackDistortions = new Map<string, WaveShaperNode>()
 
   private getContext(): AudioContext {
     if (!this.context) {
@@ -65,9 +66,9 @@ class AudioEngine {
   ): void {
     const context = this.getContext()
     const buffer = this.buffers.get(id)
-    const gain = this.trackGains.get(id)
+    const distortion = this.trackDistortions.get(id)
 
-    if (!buffer || !gain) {
+    if (!buffer || !distortion) {
       throw new Error(`Could not load sample "${id}"`)
     }
 
@@ -84,17 +85,8 @@ class AudioEngine {
     source.buffer = buffer
 
     const velocityGain = context.createGain()
-    velocityGain.connect(gain)
+    velocityGain.connect(distortion)
     velocityGain.gain.setValueAtTime(Math.min(1, Math.max(0, velocity)), time)
-
-    // if (decay < 2000) {
-    //   console.log('decayued')
-    //   const decaySeconds = decay / 1000
-    //   const timeConstant = decaySeconds / 5
-    //
-    //   velocityGain.gain.setTargetAtTime(0.0001, startTime, timeConstant)
-    //   source.stop(startTime + decaySeconds)
-    // }
 
     source.playbackRate.setValueAtTime(Math.pow(2, pitch / 12), startTime)
 
@@ -169,6 +161,14 @@ class AudioEngine {
     filter.frequency.setTargetAtTime(safeFrequency, context.currentTime, 0.01)
   }
 
+  setTrackDistortion(id: string, amount: number): void {
+    const distortion = this.trackDistortions.get(id)
+
+    if (!distortion) return
+
+    distortion.curve = this.createDistortionCurve(amount)
+  }
+
   async close(): Promise<void> {
     if (!this.context) return
 
@@ -204,9 +204,14 @@ class AudioEngine {
     filter.frequency.value = 20_000
     filter.Q.value = 0.7
 
-    velocityGain.connect(gain)
-    gain.connect(filter)
-    filter.connect(panner)
+    const distortion = context.createWaveShaper()
+    distortion.curve = this.createDistortionCurve(0)
+    distortion.oversample = '2x'
+
+    velocityGain.connect(distortion)
+    distortion.connect(filter)
+    filter.connect(gain)
+    gain.connect(panner)
     panner.connect(muteGain)
     muteGain.connect(this.masterGain!)
 
@@ -216,6 +221,24 @@ class AudioEngine {
     this.trackPanners.set(id, panner)
     this.trackMuteGains.set(id, muteGain)
     this.trackFilters.set(id, filter)
+    this.trackDistortions.set(id, distortion)
+  }
+
+  private createDistortionCurve(amount: number): Float32Array<ArrayBuffer> {
+    const sampleCount = 2048
+    const curve = new Float32Array(sampleCount)
+
+    const safeAmount = Math.min(1, Math.max(0, amount))
+    const drive = 1 + safeAmount * 33
+    const normalization = Math.tanh(drive)
+
+    for (let i = 0; i < sampleCount; i++) {
+      const input = (i / (sampleCount - 1)) * 2 - 1
+      const distorted = Math.tanh(input * drive) / normalization
+      curve[i] = input + (distorted - input) * safeAmount
+    }
+
+    return curve
   }
 }
 
