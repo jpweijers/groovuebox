@@ -40,5 +40,8 @@ function createTrack({ name, url, chokeGroup }: CreateTrackInput): Track {
     steps: Array.from({ length: 16 }, () => ({ active: false, velocity: 1 })),
     chokeGroup: chokeGroup ?? null,
     muted: false,
+    decay: 2000,
+    filter: 20_000,
+    pitch: 0,
   }
 }

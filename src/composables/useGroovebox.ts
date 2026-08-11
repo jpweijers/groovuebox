@@ -18,6 +18,9 @@ for (const track of persistedState.value.tracks) {
   track.swing ??= 50
   track.swingDivision ??= 8
   track.offset ??= 0
+  track.pitch ??= 0
+  track.decay ??= 2_000
+  track.filter ??= 20_000
 }
 
 const state = computed<GrooveBoxState>(() => ({ ...persistedState.value, ...runtimeState.value }))
@@ -190,6 +193,27 @@ export function useGroovebox() {
     }
   }
 
+  function setTrackPitch(id: string, pitch: number): void {
+    const track = findTrack(id)
+    if (track) {
+      track.pitch = pitch
+    }
+  }
+
+  function setTrackDecay(id: string, decay: number): void {
+    const track = findTrack(id)
+    if (track) {
+      track.decay = decay
+    }
+  }
+
+  function setTrackFilter(id: string, filter: number): void {
+    const track = findTrack(id)
+    if (track) {
+      track.filter = filter
+    }
+  }
+
   function _syncAudibleTracks(): void {
     for (const track of persistedState.value.tracks) {
       audioEngine.setTrackMute(track.id, !_isTrackAudible(track))
@@ -223,5 +247,8 @@ export function useGroovebox() {
     setTrackSwing,
     setTrackOffset,
     setTrackSwingDivision,
+    setTrackPitch,
+    setTrackDecay,
+    setTrackFilter,
   }
 }

@@ -5,6 +5,7 @@ import { useGroovebox } from '@/composables/useGroovebox.ts'
 import RotaryKnob from '@/components/RotaryKnob.vue'
 import TrackTiming from '@/components/TrackTiming.vue'
 import Switch from '@/components/Switch.vue'
+import Effects from '@/components/Effects.vue'
 
 const { track, selected } = defineProps<{ track: Track; selected: boolean }>()
 
@@ -81,6 +82,10 @@ function formatPan() {
     <hr />
 
     <TrackTiming :track="track" />
+
+    <hr />
+
+    <Effects :track="track" />
 
     <hr />
 

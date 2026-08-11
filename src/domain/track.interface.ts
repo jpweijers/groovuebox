@@ -14,6 +14,9 @@ export interface Track {
   swing: number
   swingDivision: 8 | 16
   offset: number
+  pitch: number
+  filter: number
+  decay: number
   steps: Step[]
   chokeGroup: ChokeGroup | null
   muted: boolean
