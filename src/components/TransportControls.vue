@@ -25,12 +25,14 @@ const { play, stop, clearAllTracks } = useGroovebox()
 }
 
 .start {
-  padding: 10px 20px;
   background: var(--orange);
 }
 
 .stop {
-  padding: 10px 20px;
   color: var(--text-muted);
+}
+
+button {
+  padding: 10px 20px;
 }
 </style>

@@ -75,9 +75,9 @@ class AudioEngine {
     }
 
     const source = context.createBufferSource()
-
     source.buffer = buffer
-    velocityGain.gain.value = velocity
+
+    velocityGain.gain.setValueAtTime(Math.min(1, Math.max(0, velocity)), time)
     source.connect(velocityGain)
 
     if (chokeGroup) {

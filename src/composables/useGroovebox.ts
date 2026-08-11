@@ -53,6 +53,14 @@ export function useGroovebox() {
     }
   }
 
+  function resetTrackVelocities(id: string) {
+    const track = findTrack(id)
+    if (!track) return
+    for (const step of track.steps) {
+      step.velocity = 1
+    }
+  }
+
   async function loadSamples(): Promise<void> {
     if (samplesLoaded) return
 
@@ -167,6 +175,7 @@ export function useGroovebox() {
     toggleStep,
     clearTrackSequence,
     clearAllTracks,
+    resetTrackVelocities,
     loadSamples,
     play,
     stop,

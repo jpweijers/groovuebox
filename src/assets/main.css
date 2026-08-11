@@ -20,6 +20,8 @@
 
   --radius-small: 4px;
 
+  --step-velocity: 50%;
+
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   color: var(--text);
   background: var(--page);
