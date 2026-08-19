@@ -1,4 +1,5 @@
 import type { ChokeGroup } from '@/domain/choke-groups.enum.ts'
+import type { TimeDivision } from '@/domain/time-division.interface.ts'
 
 export interface Step {
   active: boolean
@@ -22,4 +23,7 @@ export interface Track {
   muted: boolean
   distortion: number
   reverb: number
+  delay: number
+  delayFeedback: number
+  delayDivision: TimeDivision
 }

@@ -7,10 +7,10 @@ defineProps<{
   wave: number[]
   bpm: number
   params: {
-    1?: { name: string; value: number }
-    2?: { name: string; value: number }
-    3?: { name: string; value: number }
-    4?: { name: string; value: number }
+    1?: { name: string; value: number | string }
+    2?: { name: string; value: number | string }
+    3?: { name: string; value: number | string }
+    4?: { name: string; value: number | string }
   }
 }>()
 
@@ -58,6 +58,7 @@ function formatTrackNumber(track: number) {
   display: flex;
   justify-content: space-between;
   gap: 4px;
+  text-transform: uppercase;
 }
 
 .display__top {

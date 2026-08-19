@@ -4,6 +4,7 @@ import { useGroovebox } from '@/composables/useGroovebox.ts'
 import { computed, ref } from 'vue'
 import HardwareEncoder from '@/components/Hardware/HardwareEncoder.vue'
 import HardwareButton from '@/components/Hardware/HardwareButton.vue'
+import { TIME_DIVISIONS, type TimeDivision } from '@/domain/time-division.interface.ts'
 
 const {
   state,
@@ -17,6 +18,9 @@ const {
   setTrackSwingDivision,
   setTrackOffset,
   setTrackReverb,
+  setTrackDelay,
+  setTrackDelayTime,
+  setTrackDelayFeedback,
 } = useGroovebox()
 
 const selectedTrack = computed(() => state.value.tracks[state.value.selectedTrack]!)
@@ -24,6 +28,10 @@ const selectedTrack = computed(() => state.value.tracks[state.value.selectedTrac
 const wave = [18, 34, 70, 92, 72, 48, 26, 14, 10, 52, 82, 44, 22, 12]
 
 const page = ref<'mix' | 'sound' | 'sound2' | 'timing'>('sound')
+
+const delayDivisionIndex = computed(() => {
+  return TIME_DIVISIONS.indexOf(selectedTrack.value.delayDivision)
+})
 
 const params = computed(() => {
   switch (page.value) {
@@ -43,10 +51,9 @@ const params = computed(() => {
 
     case 'sound2':
       return {
-        1: { name: 'REVERB', value: selectedTrack.value.reverb },
-        2: { name: 'FILTER', value: selectedTrack.value.filter },
-        3: { name: 'DECAY', value: selectedTrack.value.decay },
-        4: { name: 'DRIVE', value: selectedTrack.value.distortion },
+        1: { name: 'Delay', value: selectedTrack.value.delay },
+        2: { name: 'Delay Feedback', value: selectedTrack.value.delayFeedback },
+        3: { name: 'Delay Time', value: selectedTrack.value.delayDivision },
       }
 
     case 'timing':
@@ -57,6 +64,14 @@ const params = computed(() => {
       }
   }
 })
+
+function updateDelayDivision(index: number) {
+  const division = TIME_DIVISIONS[index] as TimeDivision | undefined
+
+  if (division) {
+    setTrackDelayTime(selectedTrack.value.id, division)
+  }
+}
 </script>
 
 <template>
@@ -89,7 +104,6 @@ const params = computed(() => {
         @change="(pan) => setTrackPan(selectedTrack.id, pan)"
       />
       <HardwareEncoder
-
         :model-value="selectedTrack.reverb"
         :default-value="0"
         :min="0"
@@ -170,24 +184,32 @@ const params = computed(() => {
 
     <div v-show="page === 'sound2'" class="encoder-row">
       <HardwareEncoder
-        :model-value="selectedTrack.reverb"
+        :model-value="selectedTrack.delay"
         :default-value="0"
         :min="0"
         :max="1"
         :step="0.01"
-        @update:model-value="(reverb) => setTrackReverb(selectedTrack.id, reverb)"
-        @change="(reverb) => setTrackReverb(selectedTrack.id, reverb)"
+        @update:model-value="(delay) => setTrackDelay(selectedTrack.id, delay)"
+        @change="(delay) => setTrackDelay(selectedTrack.id, delay)"
       />
       <HardwareEncoder
-        :model-value="selectedTrack.pan"
+        :model-value="selectedTrack.delayFeedback"
         :default-value="0"
-        :min="-1"
+        :min="0"
         :max="1"
         :step="0.01"
-        @update:model-value="(pan) => setTrackPan(selectedTrack.id, pan)"
-        @change="(pan) => setTrackPan(selectedTrack.id, pan)"
+        @update:model-value="(pan) => setTrackDelayFeedback(selectedTrack.id, pan)"
+        @change="(pan) => setTrackDelayFeedback(selectedTrack.id, pan)"
       />
-      <HardwareEncoder :default-value="0" :model-value="0" />
+      <HardwareEncoder
+        :model-value="delayDivisionIndex"
+        :default-value="0"
+        :min="-1"
+        :max="TIME_DIVISIONS.length - 1"
+        :step="1"
+        @update:model-value="updateDelayDivision"
+        @change="updateDelayDivision"
+      />
       <HardwareEncoder :default-value="0" :model-value="0" />
     </div>
 

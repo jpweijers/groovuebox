@@ -1,4 +1,5 @@
 import type { ChokeGroup } from '@/domain/choke-groups.enum.ts'
+import type { TimeDivision } from '@/domain/time-division.interface.ts'
 
 interface SampleDefinition {
   id: string
@@ -11,6 +12,7 @@ interface ActiveVoice {
 }
 
 class AudioEngine {
+  private bpm: number = 90
   private context: AudioContext | null = null
   private masterGain: GainNode | null = null
   private reverbImpulse: AudioBuffer | null = null
@@ -25,6 +27,10 @@ class AudioEngine {
   private readonly trackDryGains = new Map<string, GainNode>()
   private readonly trackWetGains = new Map<string, GainNode>()
   private readonly trackReverbs = new Map<string, ConvolverNode>()
+
+  private readonly trackDelaySends = new Map<string, GainNode>()
+  private readonly trackDelayFeedbacks = new Map<string, GainNode>()
+  private readonly trackDelays = new Map<string, DelayNode>()
 
   private readonly trackSources = new Map<string, AudioBufferSourceNode>()
 
@@ -140,6 +146,10 @@ class AudioEngine {
     }
   }
 
+  setBpm(bpm: number): void {
+    this.bpm = bpm
+  }
+
   setTrackVolume(id: string, volume: number): void {
     const context = this.getContext()
     const gain = this.trackGains.get(id)
@@ -214,6 +224,41 @@ class AudioEngine {
     wetGain.gain.setTargetAtTime(wet, context.currentTime, 0.01)
   }
 
+  setTrackDelay(id: string, delayAmount: number): void {
+    const context = this.getContext()
+    const send = this.trackDelaySends.get(id)
+
+    if (!send) return
+
+    const safeAmount = Math.min(1, Math.max(0, delayAmount))
+    send.gain.cancelScheduledValues(context.currentTime)
+    send.gain.setTargetAtTime(safeAmount, context.currentTime, 0.01)
+  }
+
+  setTrackDelayFeedback(id: string, amount: number): void {
+    const context = this.getContext()
+    const delay = this.trackDelayFeedbacks.get(id)
+
+    if (!delay) return
+
+    const safeAmount = Math.min(1, Math.max(0, amount))
+
+    delay.gain.cancelScheduledValues(context.currentTime)
+    delay.gain.setTargetAtTime(safeAmount, context.currentTime, 0.01)
+  }
+
+  setTrackDelayTime(id: string, time: TimeDivision): void {
+    const context = this.getContext()
+    const delay = this.trackDelays.get(id)
+
+    if (!delay) return
+
+    const seconds = this.delayTimeInSeconds(time)
+
+    delay.delayTime.cancelScheduledValues(context.currentTime)
+    delay.delayTime.setTargetAtTime(seconds, context.currentTime, 0.01)
+  }
+
   stop(): void {
     for (const voice of this.trackVoices.values()) {
       this.releaseVoice(voice, this.getContext().currentTime)
@@ -271,15 +316,36 @@ class AudioEngine {
     this.reverbImpulse ??= this.createReverbImpulse()
     reverb.buffer = this.reverbImpulse
 
+    const delaySend = context.createGain()
+    const delay = context.createDelay(4)
+    const delayFeedback = context.createGain()
+
+    delaySend.gain.value = 0
+    delay.delayTime.value = this.delayTimeInSeconds('1/8')
+    delayFeedback.gain.value = 0.35
+
+    const preReverbMix = context.createGain()
+
     velocityGain.connect(distortion)
     distortion.connect(filter)
     filter.connect(gain)
     gain.connect(panner)
-    panner.connect(dryGain)
+    panner.connect(preReverbMix)
+
+    // Delay
+    panner.connect(delaySend)
+    delaySend.connect(delay)
+    delay.connect(preReverbMix)
+    delay.connect(delayFeedback)
+    delayFeedback.connect(delay)
+
+    // Reverb
+    preReverbMix.connect(dryGain)
     dryGain.connect(muteGain)
-    panner.connect(wetGain)
+    preReverbMix.connect(wetGain)
     wetGain.connect(reverb)
     reverb.connect(muteGain)
+
     muteGain.connect(this.masterGain!)
 
     muteGain.gain.value = 1
@@ -292,6 +358,9 @@ class AudioEngine {
     this.trackDryGains.set(id, dryGain)
     this.trackWetGains.set(id, wetGain)
     this.trackReverbs.set(id, reverb)
+    this.trackDelaySends.set(id, delaySend)
+    this.trackDelays.set(id, delay)
+    this.trackDelayFeedbacks.set(id, delayFeedback)
   }
 
   private createDistortionCurve(amount: number): Float32Array<ArrayBuffer> {
@@ -353,6 +422,23 @@ class AudioEngine {
     return {
       dry: 1,
       wet: Math.sin(angle),
+    }
+  }
+
+  private delayTimeInSeconds(division: TimeDivision): number {
+    const quarterNote = 60 / this.bpm
+
+    switch (division) {
+      case '1/4':
+        return quarterNote
+      case '1/8':
+        return quarterNote / 2
+      case '1/8T':
+        return quarterNote / 3
+      case '1/16':
+        return quarterNote / 4
+      default:
+        return 0
     }
   }
 }

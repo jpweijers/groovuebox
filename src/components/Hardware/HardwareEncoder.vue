@@ -302,5 +302,4 @@ function resetInteraction(): void {
   transform: translateX(-50%) rotate(var(--knob-angle));
   transform-origin: 50% 19px;
 }
-
 </style>

@@ -10,6 +10,7 @@ import type { ChokeGroup } from '@/domain/choke-groups.enum.ts'
 import type { Track } from '@/domain/track.interface.ts'
 import { useStorage } from '@vueuse/core'
 import { computed, ref } from 'vue'
+import type { TimeDivision } from '@/domain/time-division.interface.ts'
 
 const persistedState = useStorage<PersistedState>('groovebox', createGroovebox())
 const runtimeState = ref<RuntimeState>({ isPlaying: false, currentStep: 0, soloedTrackIds: [] })
@@ -23,6 +24,9 @@ for (const track of persistedState.value.tracks) {
   track.filter ??= 20_000
   track.distortion ??= 0
   track.reverb ??= 0
+  track.delay ??= 0
+  track.delayFeedback ??= 0.35
+  track.delayDivision ??= '1/4'
 }
 
 const state = computed<GrooveBoxState>(() => ({ ...persistedState.value, ...runtimeState.value }))
@@ -93,6 +97,10 @@ export function useGroovebox() {
         audioEngine.setTrackPan(track.id, track.pan)
         audioEngine.setTrackDistortion(track.id, track.distortion)
         audioEngine.setTrackFilter(track.id, track.filter)
+        audioEngine.setTrackReverb(track.id, track.reverb)
+        audioEngine.setTrackDelay(track.id, track.delay)
+        audioEngine.setTrackDelayFeedback(track.id, track.delayFeedback)
+        audioEngine.setTrackDelayTime(track.id, track.delayDivision)
       }
     }
 
@@ -145,6 +153,7 @@ export function useGroovebox() {
 
   function setBpm(bpm: number): void {
     persistedState.value.tempo = Math.min(240, Math.max(40, Math.round(bpm)))
+    audioEngine.setBpm(bpm)
   }
 
   function toggleMute(id: string): void {
@@ -237,6 +246,30 @@ export function useGroovebox() {
     }
   }
 
+  function setTrackDelay(id: string, delay: number): void {
+    const track = findTrack(id)
+    if (track) {
+      track.delay = delay
+      audioEngine.setTrackDelay(id, delay)
+    }
+  }
+
+  function setTrackDelayFeedback(id: string, feedback: number): void {
+    const track = findTrack(id)
+    if (track) {
+      track.delayFeedback = feedback
+      audioEngine.setTrackDelayFeedback(id, feedback)
+    }
+  }
+
+  function setTrackDelayTime(id: string, time: TimeDivision): void {
+    const track = findTrack(id)
+    if (track) {
+      track.delayDivision = time
+      audioEngine.setTrackDelayTime(track.id, time)
+    }
+  }
+
   function _syncAudibleTracks(): void {
     for (const track of persistedState.value.tracks) {
       audioEngine.setTrackMute(track.id, !_isTrackAudible(track))
@@ -275,5 +308,8 @@ export function useGroovebox() {
     setTrackFilter,
     setTrackDistortion,
     setTrackReverb,
+    setTrackDelay,
+    setTrackDelayFeedback,
+    setTrackDelayTime,
   }
 }
