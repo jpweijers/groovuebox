@@ -28,8 +28,6 @@ const emit = defineEmits<{
   change: [value: number]
 }>()
 
-const KNOB_START_ANGLE = -135
-const KNOB_SWEEP_ANGLE = 270
 const DRAG_THRESHOLD_PX = 4
 const FULL_RANGE_DRAG_PX = 125
 const VALUE_PRECISION = 6
@@ -46,14 +44,8 @@ watch(
   },
 )
 
-const formattedValue = computed(() => props.formatValue(snapValue(previewValue.value)))
-
-const valueRatio = computed(() => valueToRatio(previewValue.value))
-
-const angle = computed(() => KNOB_START_ANGLE + valueRatio.value * KNOB_SWEEP_ANGLE)
-
 const knobStyle = computed(() => ({
-  '--knob-angle': `${angle.value}deg`,
+  '--knob-angle': `${visualRotation.value}deg`,
   '--knob-size': `${props.size}px`,
 }))
 
@@ -100,6 +92,8 @@ function snapValue(value: number): number {
 }
 
 let pointerId: number | null = null
+const visualRotation = ref(0)
+let lastY = 0
 let startY = 0
 let startRatio = 0
 let moved = false
@@ -113,6 +107,7 @@ function startDrag(event: PointerEvent): void {
 
   pointerId = event.pointerId
   startY = event.clientY
+  lastY = event.clientY
   startRatio = valueToRatio(previewValue.value)
   moved = false
   dragging.value = true
@@ -135,6 +130,10 @@ function moveDrag(event: PointerEvent): void {
   const nextValue = ratioToValue(startRatio + ratioChange)
 
   updateValue(nextValue)
+
+  const deltaY = lastY - event.clientY
+  visualRotation.value += deltaY * 2.5
+  lastY = event.clientY
 }
 
 function finishDrag(event: PointerEvent): void {
@@ -170,47 +169,57 @@ function resetInteraction(): void {
 </script>
 
 <template>
-  <div class="rotary-control">
-    <span v-if="label" class="label">{{ label }}</span>
-
-    <div
+  <label class="encoder">
+    <span
       class="knob"
-      :class="{ dragging }"
       :style="knobStyle"
+      :class="{ dragging }"
       @dblclick="resetValue"
       @pointerdown="startDrag"
       @pointermove="moveDrag"
       @pointerup="finishDrag"
       @pointercancel="cancelDrag"
       @lostpointercapture="cancelDrag"
-    >
-      <span class="knob-face" aria-hidden="true" />
-      <span class="knob-marker" aria-hidden="true" />
-    </div>
+      ><i></i></span
+  ></label>
 
-    <output class="value">
-      {{ formattedValue }}
-    </output>
-  </div>
+  <!--  <div class="rotary-control">-->
+  <!--    <span v-if="label" class="label">{{ label }}</span>-->
+
+  <!--    <div-->
+  <!--      class="knob"-->
+  <!--      :class="{ dragging }"-->
+  <!--      :style="knobStyle"-->
+  <!--      @dblclick="resetValue"-->
+  <!--      @pointerdown="startDrag"-->
+  <!--      @pointermove="moveDrag"-->
+  <!--      @pointerup="finishDrag"-->
+  <!--      @pointercancel="cancelDrag"-->
+  <!--      @lostpointercapture="cancelDrag"-->
+  <!--    >-->
+  <!--      <span class="knob-face" aria-hidden="true" />-->
+  <!--      <span class="knob-marker" aria-hidden="true" />-->
+  <!--    </div>-->
+
+  <!--    <output class="value">-->
+  <!--      {{ formattedValue }}-->
+  <!--    </output>-->
+  <!--  </div>-->
 </template>
 
 <style scoped>
-.rotary-control {
+.encoder {
   display: grid;
   justify-items: center;
-  gap: 5px;
-}
-
-.label,
-.value {
-  color: var(--text-muted);
-  font-size: 0.7rem;
+  gap: 10px;
 }
 
 .knob {
+  --knob-angle: 1deg;
   position: relative;
-  width: var(--knob-size);
-  height: var(--knob-size);
+  display: block;
+  width: 60px;
+  height: 66px;
   cursor: ns-resize;
 }
 
@@ -218,34 +227,80 @@ function resetInteraction(): void {
   cursor: none;
 }
 
-.knob-face {
+.knob:after {
+  content: '';
   position: absolute;
-  inset: 3px;
-  background: linear-gradient(145deg, var(--panel-raised), var(--panel));
-  border: 1px solid var(--border);
+  left: 8px;
+  right: 8px;
+  bottom: 0;
+  height: 10px;
   border-radius: 50%;
-  box-shadow:
-    0 4px 8px rgb(0 0 0 / 35%),
-    inset 1px 1px rgb(255 255 255 / 6%);
+  background: rgb(0 0 0/0.42);
+  filter: blur(4px);
 }
 
-.knob-marker {
+.knob::before {
+  content: '';
   position: absolute;
-  inset: 3px;
+  left: 5px;
+  right: 5px;
+  top: 7px;
+  height: 52px;
+  border-radius: 50% / 43%;
+  background: repeating-conic-gradient(
+    from var(--knob-angle),
+    var(--control-bottom) 0 3deg,
+    var(--control-top) 3deg 6deg
+  );
+  box-shadow:
+    inset 4px 0 7px rgb(255 255 255 / 0.03),
+    inset -5px 0 8px rgb(0 0 0 / 0.4),
+    0 5px 0 var(--encoder-depth);
+}
+
+.knob i {
+  position: absolute;
+  z-index: 2;
+  left: 5px;
+  top: 5px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 24%,
+    var(--encoder-face-highlight),
+    var(--encoder-face-mid) 24%,
+    var(--encoder-face) 62%,
+    var(--encoder-face-shadow)
+  );
+  border: 1px solid var(--encoder-border);
+  box-shadow: inset 0 2px 2px rgb(255 255 255 / 0.07);
+}
+
+.knob i::before {
+  content: '';
+
+  position: absolute;
+  inset: 2px;
+
+  border-radius: 50%;
+
+  background: repeating-conic-gradient(rgb(255 255 255 / 0.025) 0 1deg, transparent 1deg 4deg);
+
   transform: rotate(var(--knob-angle));
 }
 
-.knob-marker::after {
-  position: absolute;
-  top: 5px;
-  left: 50%;
-  width: 3px;
-  height: 11px;
-  background: var(--amber);
-  border-radius: 2px;
-  box-shadow: 0 0 5px rgb(255 183 77 / 45%);
+.knob i::after {
   content: '';
-  transform: translateX(-50%);
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.2);
+  transform: translateX(-50%) rotate(var(--knob-angle));
+  transform-origin: 50% 19px;
 }
+
 </style>

@@ -194,6 +194,12 @@ class AudioEngine {
     distortion.curve = this.createDistortionCurve(amount)
   }
 
+  stop(): void {
+    for (const voice of this.trackVoices.values()) {
+      this.releaseVoice(voice, this.getContext().currentTime)
+    }
+  }
+
   async close(): Promise<void> {
     if (!this.context) return
 

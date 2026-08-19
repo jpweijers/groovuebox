@@ -111,6 +111,7 @@ export function useGroovebox() {
 
   async function stop(): Promise<void> {
     scheduler.stop()
+    audioEngine.stop()
     runtimeState.value.isPlaying = false
   }
 

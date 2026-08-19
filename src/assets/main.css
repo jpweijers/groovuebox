@@ -1,84 +1,54 @@
 :root {
-  --page: #11110f;
-  --panel: #1c1c19;
-  --panel-raised: #282824;
-  --border: #3a3932;
+  --scene-highlight: #242624;
+  --scene-mid: #111210;
+  --scene-edge: #080908;
 
-  --text: #eee9d9;
-  --text-muted: #969286;
+  --device-face: #272927;
+  --device-face-highlight-rgb: 255 241 218;
+  --device-border: #62655f;
+  --device-shadow: #090a09;
 
-  --amber: #e9a23b;
-  --orange: #eb5e35;
+  --device-ink: #d8d5ca;
+  --device-ink-muted: #8d9088;
+  --device-ink-background: #272927;
 
-  --mute: #4f8fbf;
-  --mute-dark: #243e52;
-  --mute-glow: rgb(79 143 191 / 30%);
+  --screw-highlight: #675a67;
+  --screw-face: #101100;
+  --screw-slot: #060706;
 
-  --solo: #d66a4a;
-  --solo-dark: #512b25;
-  --solo-glow: rgb(214 106 74 / 30%);
+  --control-top: #393c39;
+  --control-bottom: #202220;
+  --control-pressed-top: #343734;
+  --control-pressed-bottom: #1f211f;
 
-  --amber-dark: #49371f;
-  --amber-glow: rgb(220 160 74 / 30%);
+  --encoder-depth: #111311;
+  --encoder-face-highlight: #555955;
+  --encoder-face-mid: #3d413d;
+  --encoder-face: #292c29;
+  --encoder-face-shadow: #1b1b1b;
+  --encoder-border: #505450;
 
-  --radius-small: 4px;
+  --lcd-face: #111a12;
+  --lcd-border: #101210;
+  --lcd-ink: #9cdda3;
 
-  --step-velocity: 50%;
-  --knob-angle: 1deg;
-  --knob-size: 52px;
+  --light-green: #72d66b;
+  --light-amber: #f2a83b;
+  --light-blue: #579bd7;
+  --light-red: #e45b4f;
+  --light-white: #d8ddd5;
+
+  --hardware-label-size: 8px;
+  --hardware-label-weight: 800;
+  --hardware-label-spacing: 0.16em;
+
+  --radius-control: 4px;
+  --radius-display: 5px;
+  --radius-shell: 8px;
+
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-  color: var(--text);
-  background: var(--page);
 }
 
 * {
   box-sizing: border-box;
-}
-
-body {
-  min-width: 1200px;
-  min-height: 100vh;
-  margin: 0;
-  background: radial-gradient(circle at top, #292720 0%, transparent 45%), var(--page);
-}
-
-button {
-  color: inherit;
-  font: inherit;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-small);
-  cursor: pointer;
-}
-
-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-footer {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-top: 12px;
-}
-
-section {
-  margin-top: 24px;
-}
-
-header h1 {
-  font-size: 24px;
-}
-
-header h2 {
-  font-size: 18px;
-  margin: 0;
-}
-
-header span {
-  color: var(--text-muted);
-  font-size: 0.75rem;
 }
