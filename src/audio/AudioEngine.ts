@@ -13,6 +13,7 @@ interface ActiveVoice {
 class AudioEngine {
   private context: AudioContext | null = null
   private masterGain: GainNode | null = null
+  private reverbImpulse: AudioBuffer | null = null
 
   private readonly buffers = new Map<string, AudioBuffer>()
   private readonly trackGains = new Map<string, GainNode>()
@@ -21,6 +22,9 @@ class AudioEngine {
   private readonly trackMuteGains = new Map<string, GainNode>()
   private readonly trackFilters = new Map<string, BiquadFilterNode>()
   private readonly trackDistortions = new Map<string, WaveShaperNode>()
+  private readonly trackDryGains = new Map<string, GainNode>()
+  private readonly trackWetGains = new Map<string, GainNode>()
+  private readonly trackReverbs = new Map<string, ConvolverNode>()
 
   private readonly trackSources = new Map<string, AudioBufferSourceNode>()
 
@@ -194,6 +198,22 @@ class AudioEngine {
     distortion.curve = this.createDistortionCurve(amount)
   }
 
+  setTrackReverb(id: string, amount: number): void {
+    const context = this.getContext()
+    const dryGain = this.trackDryGains.get(id)
+    const wetGain = this.trackWetGains.get(id)
+
+    if (!dryGain || !wetGain) return
+
+    const { dry, wet } = this.getWetDryMix(amount)
+
+    dryGain.gain.cancelScheduledValues(context.currentTime)
+    wetGain.gain.cancelScheduledValues(context.currentTime)
+
+    dryGain.gain.setTargetAtTime(dry, context.currentTime, 0.01)
+    wetGain.gain.setTargetAtTime(wet, context.currentTime, 0.01)
+  }
+
   stop(): void {
     for (const voice of this.trackVoices.values()) {
       this.releaseVoice(voice, this.getContext().currentTime)
@@ -213,6 +233,9 @@ class AudioEngine {
     this.trackMuteGains.clear()
     this.trackSources.clear()
     this.chokeSources.clear()
+    this.trackDryGains.clear()
+    this.trackWetGains.clear()
+    this.trackReverbs.clear()
   }
 
   get currentTime(): number {
@@ -241,11 +264,22 @@ class AudioEngine {
     distortion.curve = this.createDistortionCurve(0)
     distortion.oversample = '2x'
 
+    const reverb = context.createConvolver()
+    const dryGain = context.createGain()
+    const wetGain = context.createGain()
+
+    this.reverbImpulse ??= this.createReverbImpulse()
+    reverb.buffer = this.reverbImpulse
+
     velocityGain.connect(distortion)
     distortion.connect(filter)
     filter.connect(gain)
     gain.connect(panner)
-    panner.connect(muteGain)
+    panner.connect(dryGain)
+    dryGain.connect(muteGain)
+    panner.connect(wetGain)
+    wetGain.connect(reverb)
+    reverb.connect(muteGain)
     muteGain.connect(this.masterGain!)
 
     muteGain.gain.value = 1
@@ -255,6 +289,9 @@ class AudioEngine {
     this.trackMuteGains.set(id, muteGain)
     this.trackFilters.set(id, filter)
     this.trackDistortions.set(id, distortion)
+    this.trackDryGains.set(id, dryGain)
+    this.trackWetGains.set(id, wetGain)
+    this.trackReverbs.set(id, reverb)
   }
 
   private createDistortionCurve(amount: number): Float32Array<ArrayBuffer> {
@@ -288,6 +325,35 @@ class AudioEngine {
     gain.linearRampToValueAtTime(0, stopTime)
 
     voice.source.stop(stopTime)
+  }
+
+  private createReverbImpulse(): AudioBuffer {
+    const context = this.getContext()
+    const duration = 2
+    const sampleCount = Math.floor(context.sampleRate * duration)
+    const impulse = context.createBuffer(2, sampleCount, context.sampleRate)
+
+    for (let channel = 0; channel < impulse.numberOfChannels; channel++) {
+      const samples = impulse.getChannelData(channel)
+
+      for (let index = 0; index < sampleCount; index++) {
+        const progress = index / sampleCount
+        const envelope = Math.pow(1 - progress, 2.5)
+        samples[index] = (Math.random() * 2 - 1) * envelope
+      }
+    }
+
+    return impulse
+  }
+
+  private getWetDryMix(amount: number): { wet: number; dry: number } {
+    const safeAmount = Math.min(1, Math.max(0, amount))
+    const angle = safeAmount * Math.PI * 0.5
+
+    return {
+      dry: 1,
+      wet: Math.sin(angle),
+    }
   }
 }
 

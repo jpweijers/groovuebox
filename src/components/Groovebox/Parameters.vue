@@ -16,13 +16,14 @@ const {
   setTrackSwing,
   setTrackSwingDivision,
   setTrackOffset,
+  setTrackReverb,
 } = useGroovebox()
 
 const selectedTrack = computed(() => state.value.tracks[state.value.selectedTrack]!)
 
 const wave = [18, 34, 70, 92, 72, 48, 26, 14, 10, 52, 82, 44, 22, 12]
 
-const page = ref<'mix' | 'sound' | 'timing'>('sound')
+const page = ref<'mix' | 'sound' | 'sound2' | 'timing'>('sound')
 
 const params = computed(() => {
   switch (page.value) {
@@ -30,10 +31,19 @@ const params = computed(() => {
       return {
         1: { name: 'VOL', value: selectedTrack.value.volume },
         2: { name: 'PAN', value: selectedTrack.value.pan },
+        3: { name: 'REVERB', value: selectedTrack.value.reverb },
       }
     case 'sound':
       return {
         1: { name: 'PITCH', value: selectedTrack.value.pitch },
+        2: { name: 'FILTER', value: selectedTrack.value.filter },
+        3: { name: 'DECAY', value: selectedTrack.value.decay },
+        4: { name: 'DRIVE', value: selectedTrack.value.distortion },
+      }
+
+    case 'sound2':
+      return {
+        1: { name: 'REVERB', value: selectedTrack.value.reverb },
         2: { name: 'FILTER', value: selectedTrack.value.filter },
         3: { name: 'DECAY', value: selectedTrack.value.decay },
         4: { name: 'DRIVE', value: selectedTrack.value.distortion },
@@ -78,7 +88,16 @@ const params = computed(() => {
         @update:model-value="(pan) => setTrackPan(selectedTrack.id, pan)"
         @change="(pan) => setTrackPan(selectedTrack.id, pan)"
       />
-      <HardwareEncoder :default-value="0" :model-value="0" />
+      <HardwareEncoder
+
+        :model-value="selectedTrack.reverb"
+        :default-value="0"
+        :min="0"
+        :max="1"
+        :step="0.01"
+        @update:model-value="(reverb) => setTrackReverb(selectedTrack.id, reverb)"
+        @change="(reverb) => setTrackReverb(selectedTrack.id, reverb)"
+      />
       <HardwareEncoder :default-value="0" :model-value="0" />
     </div>
 
@@ -149,9 +168,35 @@ const params = computed(() => {
       <HardwareEncoder :default-value="0" :model-value="0" />
     </div>
 
+    <div v-show="page === 'sound2'" class="encoder-row">
+      <HardwareEncoder
+        :model-value="selectedTrack.reverb"
+        :default-value="0"
+        :min="0"
+        :max="1"
+        :step="0.01"
+        @update:model-value="(reverb) => setTrackReverb(selectedTrack.id, reverb)"
+        @change="(reverb) => setTrackReverb(selectedTrack.id, reverb)"
+      />
+      <HardwareEncoder
+        :model-value="selectedTrack.pan"
+        :default-value="0"
+        :min="-1"
+        :max="1"
+        :step="0.01"
+        @update:model-value="(pan) => setTrackPan(selectedTrack.id, pan)"
+        @change="(pan) => setTrackPan(selectedTrack.id, pan)"
+      />
+      <HardwareEncoder :default-value="0" :model-value="0" />
+      <HardwareEncoder :default-value="0" :model-value="0" />
+    </div>
+
     <div class="pages">
       <HardwareButton :active="page === 'mix'" @click="page = 'mix'"> Mix </HardwareButton>
-      <HardwareButton :active="page === 'sound'" @click="page = 'sound'"> Sound </HardwareButton>
+      <HardwareButton :active="page === 'sound'" @click="page = 'sound'"> Sound I</HardwareButton>
+      <HardwareButton :active="page === 'sound2'" @click="page = 'sound2'">
+        Sound II
+      </HardwareButton>
       <HardwareButton :active="page === 'timing'" @click="page = 'timing'"> Timing </HardwareButton>
     </div>
   </div>
@@ -171,7 +216,7 @@ const params = computed(() => {
 
 .pages {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
 }
 </style>

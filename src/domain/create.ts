@@ -44,5 +44,6 @@ function createTrack({ name, url, chokeGroup }: CreateTrackInput): Track {
     filter: 20_000,
     pitch: 0,
     distortion: 0,
+    reverb: 0
   }
 }

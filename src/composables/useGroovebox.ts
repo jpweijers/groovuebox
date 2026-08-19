@@ -22,6 +22,7 @@ for (const track of persistedState.value.tracks) {
   track.decay ??= 2_000
   track.filter ??= 20_000
   track.distortion ??= 0
+  track.reverb ??= 0
 }
 
 const state = computed<GrooveBoxState>(() => ({ ...persistedState.value, ...runtimeState.value }))
@@ -228,6 +229,14 @@ export function useGroovebox() {
     }
   }
 
+  function setTrackReverb(id: string, amount: number): void {
+    const track = findTrack(id)
+    if (track) {
+      track.reverb = amount
+      audioEngine.setTrackReverb(track.id, track.reverb)
+    }
+  }
+
   function _syncAudibleTracks(): void {
     for (const track of persistedState.value.tracks) {
       audioEngine.setTrackMute(track.id, !_isTrackAudible(track))
@@ -265,5 +274,6 @@ export function useGroovebox() {
     setTrackDecay,
     setTrackFilter,
     setTrackDistortion,
+    setTrackReverb,
   }
 }

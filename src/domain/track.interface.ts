@@ -21,4 +21,5 @@ export interface Track {
   chokeGroup: ChokeGroup | null
   muted: boolean
   distortion: number
+  reverb: number
 }
