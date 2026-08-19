@@ -2,7 +2,7 @@
 import HardwareLCD from '@/components/Hardware/HardwareLCD.vue'
 
 defineProps<{
-  track: number
+  track: string
   trackName: string
   wave: number[]
   bpm: number

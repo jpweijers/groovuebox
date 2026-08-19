@@ -1,6 +1,7 @@
 import type { ChokeGroup } from '@/domain/choke-groups.enum.ts'
 import type { TimeDivision } from '@/domain/time-division.interface.ts'
 import bitcrusherUrl from '@/audio/Bitcrusher.ts?worker&url'
+import type { Compression } from '@/domain/groovebox-state.interface.ts'
 
 interface SampleDefinition {
   id: string
@@ -18,6 +19,7 @@ class AudioEngine {
   private masterGain: GainNode | null = null
   private reverbImpulse: AudioBuffer | null = null
   private bitcrusherLoaded: boolean = false
+  private compressor: DynamicsCompressorNode | null = null
 
   private readonly buffers = new Map<string, AudioBuffer>()
   private readonly trackGains = new Map<string, GainNode>()
@@ -45,7 +47,9 @@ class AudioEngine {
       this.context = new AudioContext()
 
       this.masterGain = this.context.createGain()
-      this.masterGain.connect(this.context.destination)
+      this.compressor = this.context.createDynamicsCompressor()
+      this.masterGain.connect(this.compressor)
+      this.compressor.connect(this.context.destination)
     }
 
     return this.context
@@ -287,6 +291,22 @@ class AudioEngine {
 
     parameter.cancelScheduledValues(context.currentTime)
     parameter.setTargetAtTime(safeAmount, context.currentTime, 0.01)
+  }
+
+  setCompressor(compression: Compression): void {
+    const context = this.getContext()
+
+    if (!this.compressor) return
+
+    this.compressor.threshold.cancelScheduledValues(context.currentTime)
+    this.compressor.ratio.cancelScheduledValues(context.currentTime)
+    this.compressor.attack.cancelScheduledValues(context.currentTime)
+    this.compressor.release.cancelScheduledValues(context.currentTime)
+
+    this.compressor.threshold.setTargetAtTime(compression.threshold, context.currentTime, 0.01)
+    this.compressor.ratio.setTargetAtTime(compression.ratio, context.currentTime, 0.01)
+    this.compressor.attack.setTargetAtTime(compression.attack, context.currentTime, 0.01)
+    this.compressor.release.setTargetAtTime(compression.release, context.currentTime, 0.01)
   }
 
   stop(): void {

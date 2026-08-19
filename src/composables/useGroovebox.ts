@@ -15,6 +15,13 @@ import type { TimeDivision } from '@/domain/time-division.interface.ts'
 const persistedState = useStorage<PersistedState>('groovebox', createGroovebox())
 const runtimeState = ref<RuntimeState>({ isPlaying: false, currentStep: 0, soloedTrackIds: [] })
 
+persistedState.value.compression ??= {
+  threshold: -18,
+  ratio: 4,
+  attack: 0.01,
+  release: 0.25,
+}
+
 for (const track of persistedState.value.tracks) {
   track.swing ??= 50
   track.swingDivision ??= 8
@@ -288,6 +295,26 @@ export function useGroovebox() {
     }
   }
 
+  function setCompressionThreshold(threshold: number): void {
+    state.value.compression.threshold = threshold
+    audioEngine.setCompressor(state.value.compression)
+  }
+
+  function setCompressionRatio(ratio: number): void {
+    state.value.compression.ratio = ratio
+    audioEngine.setCompressor(state.value.compression)
+  }
+
+  function setCompressionAttack(attack: number): void {
+    state.value.compression.attack = attack
+    audioEngine.setCompressor(state.value.compression)
+  }
+
+  function setCompressionRelease(release: number): void {
+    state.value.compression.release = release
+    audioEngine.setCompressor(state.value.compression)
+  }
+
   function _syncAudibleTracks(): void {
     for (const track of persistedState.value.tracks) {
       audioEngine.setTrackMute(track.id, !_isTrackAudible(track))
@@ -330,6 +357,10 @@ export function useGroovebox() {
     setTrackDelayFeedback,
     setTrackDelayTime,
     setTrackBitDepth,
-    setTrackSampleRateReduction
+    setTrackSampleRateReduction,
+    setCompressionThreshold,
+    setCompressionRatio,
+    setCompressionAttack,
+    setCompressionRelease,
   }
 }

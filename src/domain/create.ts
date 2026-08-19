@@ -24,6 +24,12 @@ export function createGroovebox(): PersistedState {
     selectedTrack: 0,
     tempo: 90,
     tracks: tracks.map(createTrack),
+    compression: {
+      threshold: -18,
+      ratio: 2,
+      attack: 0.01,
+      release: 0.25,
+    },
   }
 }
 

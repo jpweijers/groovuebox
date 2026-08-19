@@ -23,13 +23,15 @@ const {
   setTrackDelayFeedback,
   setTrackBitDepth,
   setTrackSampleRateReduction,
+  setCompressionThreshold,
+  setCompressionRatio,
+  setCompressionAttack,
+  setCompressionRelease,
 } = useGroovebox()
 
 const selectedTrack = computed(() => state.value.tracks[state.value.selectedTrack]!)
 
-const wave = [18, 34, 70, 92, 72, 48, 26, 14, 10, 52, 82, 44, 22, 12]
-
-const page = ref<'mix' | 'sound' | 'sound2' | 'crush' | 'timing'>('sound')
+const page = ref<'mix' | 'sound' | 'sound2' | 'crush' | 'timing' | 'compressor'>('sound')
 
 const delayDivisionIndex = computed(() => {
   return TIME_DIVISIONS.indexOf(selectedTrack.value.delayDivision)
@@ -70,6 +72,14 @@ const params = computed(() => {
         2: { name: 'SWING D', value: selectedTrack.value.swingDivision },
         3: { name: 'OFFSET', value: selectedTrack.value.offset },
       }
+
+    case 'compressor':
+      return {
+        1: { name: 'THRESHOLD', value: `${state.value.compression.threshold}dB` },
+        2: { name: 'Ratio', value: `${state.value.compression.ratio}x` },
+        3: { name: 'Attack', value: `${state.value.compression.attack}s` },
+        4: { name: 'Release', value: `${state.value.compression.release}s` },
+      }
   }
 })
 
@@ -80,13 +90,42 @@ function updateDelayDivision(index: number) {
     setTrackDelayTime(selectedTrack.value.id, division)
   }
 }
+
+function getTrack() {
+  if (page.value === 'compressor') {
+    return 'G'
+  }
+  return Number(state.value.selectedTrack + 1).toString()
+}
+
+const trackNumber = computed(() => {
+  if (page.value === 'compressor') {
+    return 'G'
+  }
+  return Number(state.value.selectedTrack + 1).toString()
+})
+
+const trackName = computed(() => {
+  if (page.value === 'compressor') {
+    return 'Global'
+  }
+  return selectedTrack.value.name
+})
+
+const wave = computed(() => {
+  if (page.value === 'compressor') {
+    return []
+  }
+
+  return [18, 34, 70, 92, 72, 48, 26, 14, 10, 52, 82, 44, 22, 12]
+})
 </script>
 
 <template>
   <div class="parameters">
     <HardwareDisplay
-      :track="state.selectedTrack + 1"
-      :trackName="selectedTrack.name"
+      :track="trackNumber"
+      :trackName="trackName"
       :wave="wave"
       :bpm="state.tempo"
       :params="params"
@@ -250,6 +289,45 @@ function updateDelayDivision(index: number) {
       <HardwareEncoder :default-value="0" :model-value="0" />
     </div>
 
+    <div v-show="page === 'compressor'" class="encoder-row">
+      <HardwareEncoder
+        :model-value="state.compression.threshold"
+        :default-value="-18"
+        :min="-60"
+        :max="0"
+        :step="0.1"
+        @update:model-value="(threshold) => setCompressionThreshold(threshold)"
+        @change="(threshold) => setCompressionThreshold(threshold)"
+      />
+      <HardwareEncoder
+        :model-value="state.compression.ratio"
+        :default-value="4"
+        :min="1"
+        :max="20"
+        :step="1"
+        @update:model-value="(ratio) => setCompressionRatio(ratio)"
+        @change="(ratio) => setCompressionRatio(ratio)"
+      />
+      <HardwareEncoder
+        :model-value="state.compression.attack"
+        :default-value="0.01"
+        :min="0"
+        :max="1"
+        :step="0.01"
+        @update:model-value="setCompressionAttack"
+        @change="setCompressionAttack"
+      />
+      <HardwareEncoder
+        :model-value="state.compression.release"
+        :default-value="0.25"
+        :min="0"
+        :max="1"
+        :step="0.01"
+        @update:model-value="setCompressionRelease"
+        @change="setCompressionRelease"
+      />
+    </div>
+
     <div class="pages">
       <HardwareButton :active="page === 'mix'" @click="page = 'mix'"> Mix </HardwareButton>
       <HardwareButton :active="page === 'sound'" @click="page = 'sound'"> Sound I</HardwareButton>
@@ -257,6 +335,9 @@ function updateDelayDivision(index: number) {
         Sound II
       </HardwareButton>
       <HardwareButton :active="page === 'crush'" @click="page = 'crush'"> CRUSH </HardwareButton>
+      <HardwareButton :active="page === 'compressor'" @click="page = 'compressor'">
+        COMP
+      </HardwareButton>
       <HardwareButton :active="page === 'timing'" @click="page = 'timing'"> Timing </HardwareButton>
     </div>
   </div>
@@ -276,7 +357,7 @@ function updateDelayDivision(index: number) {
 
 .pages {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 12px;
 }
 </style>
