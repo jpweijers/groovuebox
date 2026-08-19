@@ -1,5 +1,6 @@
 import type { ChokeGroup } from '@/domain/choke-groups.enum.ts'
 import type { TimeDivision } from '@/domain/time-division.interface.ts'
+import bitcrusherUrl from '@/audio/Bitcrusher.ts?worker&url'
 
 interface SampleDefinition {
   id: string
@@ -16,6 +17,7 @@ class AudioEngine {
   private context: AudioContext | null = null
   private masterGain: GainNode | null = null
   private reverbImpulse: AudioBuffer | null = null
+  private bitcrusherLoaded: boolean = false
 
   private readonly buffers = new Map<string, AudioBuffer>()
   private readonly trackGains = new Map<string, GainNode>()
@@ -27,6 +29,7 @@ class AudioEngine {
   private readonly trackDryGains = new Map<string, GainNode>()
   private readonly trackWetGains = new Map<string, GainNode>()
   private readonly trackReverbs = new Map<string, ConvolverNode>()
+  private readonly trackBitcrushers = new Map<string, AudioWorkletNode>()
 
   private readonly trackDelaySends = new Map<string, GainNode>()
   private readonly trackDelayFeedbacks = new Map<string, GainNode>()
@@ -59,6 +62,7 @@ class AudioEngine {
   async loadSamples(samples: SampleDefinition[]): Promise<void> {
     const context = this.getContext()
 
+    await this.loadBitcrusher()
     await Promise.all(
       samples.map(async ({ id, url }) => {
         const response = await fetch(url)
@@ -86,9 +90,9 @@ class AudioEngine {
   ): void {
     const context = this.getContext()
     const buffer = this.buffers.get(id)
-    const distortion = this.trackDistortions.get(id)
+    const bitcrusher = this.trackBitcrushers.get(id)
 
-    if (!buffer || !distortion) {
+    if (!buffer || !bitcrusher) {
       throw new Error(`Could not load sample "${id}"`)
     }
 
@@ -115,7 +119,7 @@ class AudioEngine {
     const safeVelocity = Math.min(1, Math.max(0, velocity))
     voiceGain.gain.setValueAtTime(0, startTime)
     voiceGain.gain.linearRampToValueAtTime(safeVelocity, startTime + attack)
-    voiceGain.connect(distortion)
+    voiceGain.connect(bitcrusher)
 
     source.playbackRate.setValueAtTime(Math.pow(2, pitch / 12), startTime)
 
@@ -259,6 +263,32 @@ class AudioEngine {
     delay.delayTime.setTargetAtTime(seconds, context.currentTime, 0.01)
   }
 
+  setTrackBitDepth(id: string, amount: number): void {
+    const context = this.getContext()
+    const bitcrusher = this.trackBitcrushers.get(id)
+    const parameter = bitcrusher?.parameters.get('bitDepth')
+
+    if (!parameter) return
+
+    const safeAmount = Math.round(Math.min(16, Math.max(1, amount)))
+
+    parameter.cancelScheduledValues(context.currentTime)
+    parameter.setTargetAtTime(safeAmount, context.currentTime, 0.01)
+  }
+
+  setTrackSampleRateReduction(id: string, amount: number): void {
+    const context = this.getContext()
+    const bitcrusher = this.trackBitcrushers.get(id)
+    const parameter = bitcrusher?.parameters.get('sampleRateReduction')
+
+    if (!parameter) return
+
+    const safeAmount = Math.round(Math.min(32, Math.max(1, amount)))
+
+    parameter.cancelScheduledValues(context.currentTime)
+    parameter.setTargetAtTime(safeAmount, context.currentTime, 0.01)
+  }
+
   stop(): void {
     for (const voice of this.trackVoices.values()) {
       this.releaseVoice(voice, this.getContext().currentTime)
@@ -281,6 +311,7 @@ class AudioEngine {
     this.trackDryGains.clear()
     this.trackWetGains.clear()
     this.trackReverbs.clear()
+    this.trackBitcrushers.clear()
   }
 
   get currentTime(): number {
@@ -326,7 +357,14 @@ class AudioEngine {
 
     const preReverbMix = context.createGain()
 
-    velocityGain.connect(distortion)
+    const bitcrusher = new AudioWorkletNode(context, 'bitcrusher', {
+      numberOfInputs: 1,
+      numberOfOutputs: 1,
+      outputChannelCount: [2],
+    })
+
+    velocityGain.connect(bitcrusher)
+    bitcrusher.connect(distortion)
     distortion.connect(filter)
     filter.connect(gain)
     gain.connect(panner)
@@ -361,6 +399,7 @@ class AudioEngine {
     this.trackDelaySends.set(id, delaySend)
     this.trackDelays.set(id, delay)
     this.trackDelayFeedbacks.set(id, delayFeedback)
+    this.trackBitcrushers.set(id, bitcrusher)
   }
 
   private createDistortionCurve(amount: number): Float32Array<ArrayBuffer> {
@@ -440,6 +479,15 @@ class AudioEngine {
       default:
         return 0
     }
+  }
+
+  private async loadBitcrusher(): Promise<void> {
+    if (this.bitcrusherLoaded) return
+
+    const context = this.getContext()
+
+    await context.audioWorklet.addModule(bitcrusherUrl)
+    this.bitcrusherLoaded = true
   }
 }
 

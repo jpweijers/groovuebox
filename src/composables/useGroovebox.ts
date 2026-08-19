@@ -27,6 +27,8 @@ for (const track of persistedState.value.tracks) {
   track.delay ??= 0
   track.delayFeedback ??= 0.35
   track.delayDivision ??= '1/4'
+  track.bitDepth ??= 16
+  track.sampleRateReduction ??= 0
 }
 
 const state = computed<GrooveBoxState>(() => ({ ...persistedState.value, ...runtimeState.value }))
@@ -270,6 +272,22 @@ export function useGroovebox() {
     }
   }
 
+  function setTrackBitDepth(id: string, bitDepth: number): void {
+    const track = findTrack(id)
+    if (track) {
+      track.bitDepth = bitDepth
+      audioEngine.setTrackBitDepth(track.id, track.bitDepth)
+    }
+  }
+
+  function setTrackSampleRateReduction(id: string, sampleRateReduction: number): void {
+    const track = findTrack(id)
+    if (track) {
+      track.sampleRateReduction = sampleRateReduction
+      audioEngine.setTrackSampleRateReduction(id, track.sampleRateReduction)
+    }
+  }
+
   function _syncAudibleTracks(): void {
     for (const track of persistedState.value.tracks) {
       audioEngine.setTrackMute(track.id, !_isTrackAudible(track))
@@ -311,5 +329,7 @@ export function useGroovebox() {
     setTrackDelay,
     setTrackDelayFeedback,
     setTrackDelayTime,
+    setTrackBitDepth,
+    setTrackSampleRateReduction
   }
 }

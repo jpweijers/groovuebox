@@ -26,4 +26,6 @@ export interface Track {
   delay: number
   delayFeedback: number
   delayDivision: TimeDivision
+  bitDepth: number
+  sampleRateReduction: number
 }

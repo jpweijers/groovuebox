@@ -48,5 +48,7 @@ function createTrack({ name, url, chokeGroup }: CreateTrackInput): Track {
     delay: 0,
     delayFeedback: 0,
     delayDivision: '1/4',
+    bitDepth: 16,
+    sampleRateReduction: 0,
   }
 }

@@ -21,13 +21,15 @@ const {
   setTrackDelay,
   setTrackDelayTime,
   setTrackDelayFeedback,
+  setTrackBitDepth,
+  setTrackSampleRateReduction,
 } = useGroovebox()
 
 const selectedTrack = computed(() => state.value.tracks[state.value.selectedTrack]!)
 
 const wave = [18, 34, 70, 92, 72, 48, 26, 14, 10, 52, 82, 44, 22, 12]
 
-const page = ref<'mix' | 'sound' | 'sound2' | 'timing'>('sound')
+const page = ref<'mix' | 'sound' | 'sound2' | 'crush' | 'timing'>('sound')
 
 const delayDivisionIndex = computed(() => {
   return TIME_DIVISIONS.indexOf(selectedTrack.value.delayDivision)
@@ -54,6 +56,12 @@ const params = computed(() => {
         1: { name: 'Delay', value: selectedTrack.value.delay },
         2: { name: 'Delay Feedback', value: selectedTrack.value.delayFeedback },
         3: { name: 'Delay Time', value: selectedTrack.value.delayDivision },
+      }
+
+    case 'crush':
+      return {
+        1: { name: 'BIT DEPTH', value: selectedTrack.value.bitDepth },
+        2: { name: 'RATE', value: selectedTrack.value.sampleRateReduction },
       }
 
     case 'timing':
@@ -213,12 +221,42 @@ function updateDelayDivision(index: number) {
       <HardwareEncoder :default-value="0" :model-value="0" />
     </div>
 
+    <div v-show="page === 'crush'" class="encoder-row">
+      <HardwareEncoder
+        :model-value="selectedTrack.bitDepth"
+        :default-value="16"
+        :min="1"
+        :max="16"
+        :step="1"
+        @update:model-value="(bitDepth) => setTrackBitDepth(selectedTrack.id, bitDepth)"
+        @change="(bitDepth) => setTrackBitDepth(selectedTrack.id, bitDepth)"
+      />
+      <HardwareEncoder
+        :model-value="selectedTrack.delayFeedback"
+        :default-value="0"
+        :min="0"
+        :max="32"
+        :step="1"
+        @update:model-value="
+          (sampleRateReduction) =>
+            setTrackSampleRateReduction(selectedTrack.id, sampleRateReduction)
+        "
+        @change="
+          (sampleRateReduction) =>
+            setTrackSampleRateReduction(selectedTrack.id, sampleRateReduction)
+        "
+      />
+      <HardwareEncoder :default-value="0" :model-value="0" />
+      <HardwareEncoder :default-value="0" :model-value="0" />
+    </div>
+
     <div class="pages">
       <HardwareButton :active="page === 'mix'" @click="page = 'mix'"> Mix </HardwareButton>
       <HardwareButton :active="page === 'sound'" @click="page = 'sound'"> Sound I</HardwareButton>
       <HardwareButton :active="page === 'sound2'" @click="page = 'sound2'">
         Sound II
       </HardwareButton>
+      <HardwareButton :active="page === 'crush'" @click="page = 'crush'"> CRUSH </HardwareButton>
       <HardwareButton :active="page === 'timing'" @click="page = 'timing'"> Timing </HardwareButton>
     </div>
   </div>
